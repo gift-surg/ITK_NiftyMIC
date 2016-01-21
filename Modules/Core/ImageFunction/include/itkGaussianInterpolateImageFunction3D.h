@@ -111,6 +111,7 @@ public:
     }
   virtual void SetSigma( RealType *s )
     {
+    //TODO: Matrix type sigma
     ArrayType sigma;
     for( unsigned int d = 0; d < ImageDimension; d++ )
       {

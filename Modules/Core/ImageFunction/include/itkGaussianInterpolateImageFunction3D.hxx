@@ -34,8 +34,8 @@ template<typename TImageType, typename TCoordRep>
 GaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::GaussianInterpolateImageFunction()
 {
-  this->m_Alpha = 1.0;
-  this->m_Sigma.Fill( 1.0 );
+  this->m_Alpha = 1.0;       //TODO: set alpha-vector
+  this->m_Sigma.Fill( 1.0 ); //TODO: set identity-matrix
 }
 
 /**
@@ -70,8 +70,8 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
     this->m_BoundingBoxStart[d] = -0.5;
     // ? ME: static_cast<RealType>( size[d] )?
     this->m_BoundingBoxEnd[d] = static_cast<RealType>( size[d] ) - 0.5;
-    this->m_ScalingFactor[d] = 1.0 / ( vnl_math::sqrt2 * this->m_Sigma[d] / spacing[d] );
-    this->m_CutoffDistance[d] = this->m_Sigma[d] * this->m_Alpha / spacing[d];
+    this->m_ScalingFactor[d] = 1.0 / ( vnl_math::sqrt2 * this->m_Sigma[d] / spacing[d] ); //TODO: Only dependent on spacing
+    this->m_CutoffDistance[d] = this->m_Sigma[d] * this->m_Alpha / spacing[d]; //TODO: alpha in all directions
     }
 }
 
@@ -116,7 +116,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
     int boundingBoxSize = static_cast<int>(
-      this->m_BoundingBoxEnd[d] - this->m_BoundingBoxStart[d] + 0.5 );
+      this->m_BoundingBoxEnd[d] - this->m_BoundingBoxStart[d] + 0.5 );  // = size[d]
     int begin = vnl_math_max( 0, static_cast<int>( std::floor( cindex[d] -
       this->m_BoundingBoxStart[d] - this->m_CutoffDistance[d] ) ) );
     int end = vnl_math_min( boundingBoxSize, static_cast<int>( std::ceil(
@@ -208,7 +208,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
     this->m_BoundingBoxStart[dimension] +
     this->m_CutoffDistance[dimension] ) ) );
 
-  erfArray.set_size( boundingBoxSize );
+  erfArray.set_size( boundingBoxSize ); //ME: arrays are bigger than required!? cf below from line 227
   gerfArray.set_size( boundingBoxSize );
 
   // Start at the first voxel
@@ -227,7 +227,6 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   for( int i = begin; i < end; i++ )
     {
     t += this->m_ScalingFactor[dimension];
-    // ? ME: Shouldn't it be
     RealType e_now = vnl_erf( t );
     erfArray[i] = e_now - e_last;
     if( evaluateGradient )
