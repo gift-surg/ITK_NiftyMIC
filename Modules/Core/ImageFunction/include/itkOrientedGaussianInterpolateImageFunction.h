@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGaussianInterpolateImageFunction.h,v $
+  Module:    $RCSfile: itkOrientedGaussianInterpolateImageFunction.h,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -14,8 +14,8 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef itkGaussianInterpolateImageFunction3D_h
-#define itkGaussianInterpolateImageFunction3D_h
+#ifndef itkOrientedGaussianInterpolateImageFunction_h
+#define itkOrientedGaussianInterpolateImageFunction_h
 
 #include "itkInterpolateImageFunction.h"
 
@@ -26,7 +26,7 @@
 namespace itk
 {
 
-/** \class GaussianInterpolateImageFunction
+/** \class OrientedGaussianInterpolateImageFunction
  * \brief Evaluates the Gaussian interpolation of an image.
  *
  * This class defines an N-dimensional Gaussian interpolation function using
@@ -48,18 +48,18 @@ namespace itk
  */
 
 template <typename TInputImage, typename TCoordRep = double>
-class GaussianInterpolateImageFunction :
+class OrientedGaussianInterpolateImageFunction :
   public InterpolateImageFunction<TInputImage, TCoordRep>
 {
 public:
   /** Standard class typedefs. */
-  typedef GaussianInterpolateImageFunction                 Self;
+  typedef OrientedGaussianInterpolateImageFunction         Self;
   typedef InterpolateImageFunction<TInputImage, TCoordRep> Superclass;
   typedef SmartPointer<Self>                               Pointer;
   typedef SmartPointer<const Self>                         ConstPointer;
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro( GaussianInterpolateImageFunction, InterpolateImageFunction );
+  itkTypeMacro( OrientedGaussianInterpolateImageFunction, InterpolateImageFunction );
 
   /** Method for creation through the object factory. */
   itkNewMacro( Self );
@@ -155,8 +155,8 @@ public:
     }
 
 protected:
-  GaussianInterpolateImageFunction();
-  ~GaussianInterpolateImageFunction(){};
+  OrientedGaussianInterpolateImageFunction();
+  ~OrientedGaussianInterpolateImageFunction(){};
   void PrintSelf( std::ostream& os, Indent indent ) const ITK_OVERRIDE;
 
   virtual void ComputeBoundingBox();
@@ -174,7 +174,7 @@ protected:
   ArrayType                                 m_CutoffDistance;
 
 private:
-  GaussianInterpolateImageFunction( const Self& ) ITK_DELETE_FUNCTION;
+  OrientedGaussianInterpolateImageFunction( const Self& ) ITK_DELETE_FUNCTION;
   void operator=( const Self& ) ITK_DELETE_FUNCTION;
 
   /**
@@ -187,7 +187,7 @@ private:
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkGaussianInterpolateImageFunction.hxx"
+#include "itkOrientedGaussianInterpolateImageFunction.hxx"
 #include "itkMath.h"
 #endif
 

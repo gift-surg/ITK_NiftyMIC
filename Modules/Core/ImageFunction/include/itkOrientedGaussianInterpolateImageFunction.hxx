@@ -1,7 +1,7 @@
 /*=========================================================================
 
   Program:   Insight Segmentation & Registration Toolkit
-  Module:    $RCSfile: itkGaussianInterpolateImageFunction.hxx,v $
+  Module:    $RCSfile: itkOrientedGaussianInterpolateImageFunction.hxx,v $
   Language:  C++
   Date:      $Date: $
   Version:   $Revision: $
@@ -17,10 +17,10 @@
      PURPOSE.  See the above copyright notices for more information.
 
 =========================================================================*/
-#ifndef itkGaussianInterpolateImageFunction3D_hxx
-#define itkGaussianInterpolateImageFunction3D_hxx
+#ifndef itkOrientedGaussianInterpolateImageFunction_hxx
+#define itkOrientedGaussianInterpolateImageFunction_hxx
 
-#include "itkGaussianInterpolateImageFunction3D.h"
+#include "itkOrientedGaussianInterpolateImageFunction.h"
 
 #include "itkImageRegionConstIteratorWithIndex.h"
 
@@ -31,8 +31,8 @@ namespace itk
  * Constructor
  */
 template<typename TImageType, typename TCoordRep>
-GaussianInterpolateImageFunction<TImageType, TCoordRep>
-::GaussianInterpolateImageFunction()
+OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
+::OrientedGaussianInterpolateImageFunction()
 {
   this->m_Alpha = 1.0;       //TODO: set alpha-vector
   this->m_Sigma.Fill( 1.0 ); //TODO: set identity-matrix
@@ -43,7 +43,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
  */
 template<typename TImageType, typename TCoordRep>
 void
-GaussianInterpolateImageFunction<TImageType, TCoordRep>
+OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::PrintSelf( std::ostream& os, Indent indent ) const
 {
   Superclass::PrintSelf( os, indent );
@@ -53,7 +53,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
 
 template<typename TImageType, typename TCoordRep>
 void
-GaussianInterpolateImageFunction<TImageType, TCoordRep>
+OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::ComputeBoundingBox()
 {
   if( !this->GetInputImage() )
@@ -78,9 +78,9 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
 
 // ME: Compute intensity value of one single voxel based on Gaussian interpolation
 template<typename TImageType, typename TCoordRep>
-typename GaussianInterpolateImageFunction<TImageType, TCoordRep>
+typename OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::OutputType
-GaussianInterpolateImageFunction<TImageType, TCoordRep>
+OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::EvaluateAtContinuousIndex( const ContinuousIndexType & cindex, OutputType *grad ) const
 {
   // ME: Where is ImageDimension defined?
@@ -192,7 +192,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
 
 template<typename TImageType, typename TCoordRep>
 void
-GaussianInterpolateImageFunction<TImageType, TCoordRep>
+OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::ComputeErrorFunctionArray( unsigned int dimension, RealType cindex,
   vnl_vector<RealType> &erfArray, vnl_vector<RealType> &gerfArray,
   bool evaluateGradient ) const
