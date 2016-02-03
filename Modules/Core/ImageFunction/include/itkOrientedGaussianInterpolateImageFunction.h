@@ -113,12 +113,30 @@ public:
     {
     //TODO: Matrix type sigma
     ArrayType sigma;
+    itk::Matrix<double, ImageDimension, ImageDimension> Cov;
+    Cov.Fill(0.0);
     for( unsigned int d = 0; d < ImageDimension; d++ )
       {
       sigma[d] = s[d];
+      Cov(d,d) = s[d]*s[d];
       }
     this->SetSigma( sigma );
+    this->SetCovariance( Cov );
     }
+  virtual void SetCovariance( itk::Matrix<double, ImageDimension, ImageDimension> Cov){
+    itk::Matrix<double, ImageDimension, ImageDimension> matrix;
+    ArrayType sigma;
+    for (int i = 0; i < ImageDimension; ++i)
+    {
+      for (int j = 0; j < ImageDimension; ++j)
+      {
+        matrix(i,j) = Cov(i,j);
+      }
+      sigma[i] = sqrt(Cov(i,i));
+    }
+    this->m_Cov = matrix;
+    this->SetSigma(sigma);
+  }
   itkGetConstMacro( Sigma, ArrayType );
 
   /**
@@ -161,17 +179,18 @@ protected:
 
   virtual void ComputeBoundingBox();
 
-  virtual void ComputeErrorFunctionArray( unsigned int dimension, RealType cindex,
-    vnl_vector<RealType> &erfArray, vnl_vector<RealType> &gerfArray,
-    bool evaluateGradient = false ) const;
+  virtual RealType ComputeExponentialFunction(
+    IndexType point,
+    ContinuousIndexType center,
+    itk::Matrix<double, ImageDimension, ImageDimension> SigmaInverse ) const;
 
-  ArrayType                                 m_Sigma;
-  RealType                                  m_Alpha;
+  ArrayType                                           m_Sigma;
+  RealType                                            m_Alpha;
+  itk::Matrix<double, ImageDimension, ImageDimension> m_Cov;
 
-  ArrayType                                 m_BoundingBoxStart;
-  ArrayType                                 m_BoundingBoxEnd;
-  ArrayType                                 m_ScalingFactor;
-  ArrayType                                 m_CutoffDistance;
+  ArrayType                                           m_BoundingBoxStart;
+  ArrayType                                           m_BoundingBoxEnd;
+  ArrayType                                           m_CutoffDistance;
 
 private:
   OrientedGaussianInterpolateImageFunction( const Self& ) ITK_DELETE_FUNCTION;

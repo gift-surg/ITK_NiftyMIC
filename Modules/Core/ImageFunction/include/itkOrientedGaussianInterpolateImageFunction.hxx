@@ -34,8 +34,9 @@ template<typename TImageType, typename TCoordRep>
 OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::OrientedGaussianInterpolateImageFunction()
 {
-  this->m_Alpha = 1.0;       //TODO: set alpha-vector
-  this->m_Sigma.Fill( 1.0 ); //TODO: set identity-matrix
+  this->m_Alpha = 1.0;
+  this->m_Sigma.Fill( 1.0 );
+  this->m_Cov.SetIdentity();
 }
 
 /**
@@ -68,10 +69,8 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
     this->m_BoundingBoxStart[d] = -0.5;
-    // ? ME: static_cast<RealType>( size[d] )?
     this->m_BoundingBoxEnd[d] = static_cast<RealType>( size[d] ) - 0.5;
-    this->m_ScalingFactor[d] = 1.0 / ( vnl_math::sqrt2 * this->m_Sigma[d] / spacing[d] ); //TODO: Only dependent on spacing
-    this->m_CutoffDistance[d] = this->m_Sigma[d] * this->m_Alpha / spacing[d]; //TODO: alpha in all directions
+    this->m_CutoffDistance[d] = this->m_Sigma[d] * this->m_Alpha / spacing[d];
     }
 }
 
@@ -85,19 +84,6 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 {
   // ME: Where is ImageDimension defined?
   vnl_vector<RealType> erfArray[ImageDimension];  // ME: error function
-  vnl_vector<RealType> gerfArray[ImageDimension]; // ME: gradient error function
-
-  // Compute the ERF difference arrays
-  for( unsigned int d = 0; d < ImageDimension; d++ )
-    {
-    bool evaluateGradient = false;
-    if( grad )
-      {
-      evaluateGradient = true;
-      }
-    this->ComputeErrorFunctionArray( d, cindex[d], erfArray[d],
-      gerfArray[d], evaluateGradient );
-    }
 
   RealType sum_me = 0.0;
   RealType sum_m = 0.0;
@@ -110,8 +96,7 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
   dw.Fill( 0.0 );
 
   // Loop over the voxels in the region identified
-  // ME: First, compute region which is to be considered, i.e. have non-zero Gaussian weights
-  // ? ME: Is this a rectangular bounding box?
+  // ME: First, compute region (rectangular bounding box) which is to be considered, i.e. have non-zero Gaussian weights
   ImageRegion<ImageDimension> region;
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
@@ -129,114 +114,70 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
   ImageRegionConstIteratorWithIndex<InputImageType> It(
     this->GetInputImage(), region );
 
+  // ME: Compute scaled oriented PSF for voxel space
+  /* Scaling matrix */
+  const typename InputImageType::SpacingType spacing = this->GetInputImage()->GetSpacing();
+  itk::Matrix<double,ImageDimension,ImageDimension> S;
+  S.Fill(0.0);
+  for (int d = 0; d < ImageDimension; ++d)
+    {
+    S(d,d) = spacing[d];
+    }
+  // std::cout << "S = \n" << S << std::endl;
+
+  /* Scale rotated inverse Gaussian needed for exponential function */
+  itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv = S * this->m_Cov.GetInverse() * S;
+  // std::cout << "CovScaledInv = \n" << CovScaledInv << std::endl;
+
+  RealType w = 0.0;
+
   // ME: For each voxel of that region do
   for( It.GoToBegin(); !It.IsAtEnd(); ++It )
     {
-    unsigned int j = It.GetIndex()[0];    // ? ME: What do I get here exactly?
-    RealType w = erfArray[0][j];          // ME: Get weight of current element (first coordinate out of ImageDimension dimensions)
-    if( grad )
-      {
-      dw[0] = gerfArray[0][j];
-      for( unsigned int d = 1; d < ImageDimension; d++ )
-        {
-        dw[d] = erfArray[0][j];
-        }
-      }
-    // ME: Compute weight of voxel
-    for( unsigned int d = 1; d < ImageDimension; d++)
-      {
-      j = It.GetIndex()[d];
-      // ? ME: This must assume a diagonal covariance matrix!?
-      // ? ME: Otherwise not just a simple multiplication of weights
-      w *= erfArray[d][j];    // ME: Update weight
-      if( grad )
-        {
-        for( unsigned int q = 0; q < ImageDimension; q++ )
-          {
-          if( d == q )
-            {
-            dw[q] *= gerfArray[d][j];
-            }
-          else
-            {
-            dw[q] *= erfArray[d][j];
-            }
-          }
-        }
-      }
+    typename InputImageType::IndexType index = It.GetIndex();
+
+    w = this->ComputeExponentialFunction(index, cindex, CovScaledInv);
     RealType V = It.Get();  // ME: Intensity of current voxel
     sum_me += V * w;        // ME: Add Gaussian weighted intensity
     sum_m += w;             // ME: Record weight sum for subsequent normalization
-    if( grad )
-      {
-      for( unsigned int q = 0; q < ImageDimension; q++ )
-        {
-        dsum_me[q] += V * dw[q];
-        dsum_m[q] += dw[q];
-        }
-      }
     }
-  RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
 
-  if( grad )
-    {
-    for( unsigned int q = 0; q < ImageDimension; q++ )
-      {
-      grad[q] = ( dsum_me[q] - rc * dsum_m[q] ) / sum_m;
-      grad[q] /= -vnl_math::sqrt2 * this->m_Sigma[q];
-      }
-    }
+  RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
 
   return rc;
 }
 
+
 template<typename TImageType, typename TCoordRep>
-void
+typename OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
+::RealType
 OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
-::ComputeErrorFunctionArray( unsigned int dimension, RealType cindex,
-  vnl_vector<RealType> &erfArray, vnl_vector<RealType> &gerfArray,
-  bool evaluateGradient ) const
+::ComputeExponentialFunction(
+  IndexType point,
+  ContinuousIndexType center,
+  itk::Matrix<double, ImageDimension, ImageDimension> SigmaInverse ) const
 {
-  // Determine the range of voxels along the line where to evaluate erf
-  int boundingBoxSize = static_cast<int>(
-    this->m_BoundingBoxEnd[dimension] - this->m_BoundingBoxStart[dimension] +
-    0.5 );
-  int begin = vnl_math_max( 0, static_cast<int>( std::floor( cindex -
-    this->m_BoundingBoxStart[dimension] -
-    this->m_CutoffDistance[dimension] ) ) );
-  int end = vnl_math_min( boundingBoxSize, static_cast<int>( std::ceil( cindex -
-    this->m_BoundingBoxStart[dimension] +
-    this->m_CutoffDistance[dimension] ) ) );
+  itk::Vector<double, ImageDimension> tmp;
+  itk::Vector<double, ImageDimension> diff;
+  RealType result;
 
-  erfArray.set_size( boundingBoxSize ); //ME: arrays are bigger than required!? cf below from line 227
-  gerfArray.set_size( boundingBoxSize );
+  for (int i = 0; i < ImageDimension; ++i)
+  {
+    diff[i] = point[i] - center[i];
+    // printf("diff[%d] = %f\n", i, diff[i]);
+  }
 
-  // Start at the first voxel
-  RealType t = ( this->m_BoundingBoxStart[dimension] - cindex +
-    static_cast<RealType>( begin ) ) * this->m_ScalingFactor[dimension];
-  // ME: vnl_erf(t) = (2/sqrt(pi)) Integral from 0 to t (exp(-x^2) dx)
-  RealType e_last = vnl_erf( t );   // ME: error function
-  RealType g_last = 0.0;            // ME: gradient
-  if( evaluateGradient )
-    {
-    g_last = vnl_math::two_over_sqrtpi * std::exp( -vnl_math_sqr( t ) );
-    }
 
-  // ME: Computation of (standard) Gaussian weights (up to a constant)
-  // ME: of each node given by spacing
-  for( int i = begin; i < end; i++ )
-    {
-    t += this->m_ScalingFactor[dimension];
-    RealType e_now = vnl_erf( t );
-    erfArray[i] = e_now - e_last;
-    if( evaluateGradient )
-      {
-      RealType g_now = vnl_math::two_over_sqrtpi * std::exp( -vnl_math_sqr( t ) );
-      gerfArray[i] = g_now - g_last;
-      g_last = g_now;
-      }
-    e_last = e_now;
-    }
+  tmp = SigmaInverse*diff;
+  result = diff*tmp;
+
+  // std::cout << "Sigma*(point-center) = " << tmp << std::endl;
+  // std::cout << "(point-center)'*Sigma*(point-center) = " << result << std::endl;
+
+  result = exp( -0.5*result );
+  // std::cout << "exp(.) = " << result << std::endl;
+
+  return result;
 }
 
 } // namespace itk
