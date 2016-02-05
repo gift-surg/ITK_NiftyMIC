@@ -123,6 +123,11 @@ public:
     this->SetSigma( sigma );
     this->SetCovariance( Cov );
     }
+  itkGetConstMacro( Sigma, ArrayType );
+
+  /**
+   * Set/Get Covariance
+   */
   virtual void SetCovariance( itk::Matrix<double, ImageDimension, ImageDimension> Cov){
     itk::Matrix<double, ImageDimension, ImageDimension> matrix;
     ArrayType sigma;
@@ -132,12 +137,16 @@ public:
       {
         matrix(i,j) = Cov(i,j);
       }
-      sigma[i] = sqrt(Cov(i,i));
+      // sigma[i] = sqrt(Cov(i,i));
+      this->m_Sigma[i] = sqrt(Cov(i,i));
     }
-    this->m_Cov = matrix;
-    this->SetSigma(sigma);
+    this->m_Covariance = matrix;
+    // this->SetSigma(sigma);
   }
-  itkGetConstMacro( Sigma, ArrayType );
+  itkGetConstObjectMacro( Covariance, itk::Matrix<double, ImageDimension, ImageDimension> );
+  // itkGetConstReferenceObjectMacro( Covariance, itk::Matrix<double, ImageDimension, ImageDimension> );
+  // virtual itk::Matrix<double, ImageDimension, ImageDimension>
+  //   GetCovariance() const { return this->m_Covariance; }
 
   /**
    * Set/Get alpha
@@ -186,7 +195,7 @@ protected:
 
   ArrayType                                           m_Sigma;
   RealType                                            m_Alpha;
-  itk::Matrix<double, ImageDimension, ImageDimension> m_Cov;
+  itk::Matrix<double, ImageDimension, ImageDimension> m_Covariance;
 
   ArrayType                                           m_BoundingBoxStart;
   ArrayType                                           m_BoundingBoxEnd;
