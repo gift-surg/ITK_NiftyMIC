@@ -87,6 +87,9 @@ public:
   /** Array typedef support */
   typedef FixedArray<RealType, ImageDimension> ArrayType;
 
+  /** Square array typedef support */
+  typedef FixedArray<RealType, ImageDimension*ImageDimension> SquareArrayType;
+
   /**
    * Set input image
    */
@@ -105,48 +108,56 @@ public:
     if( this->m_Sigma != s )
       {
       this->m_Sigma = s;
+      this->m_Covariance.Fill(0.0);
+      for( int d = 0; d < ImageDimension; d++ )
+        {
+        this->m_Covariance[d*ImageDimension + d] = s[d]*s[d];
+        }
+      }
       this->ComputeBoundingBox();
       this->Modified();
-      }
     }
   virtual void SetSigma( RealType *s )
     {
-    //TODO: Matrix type sigma
     ArrayType sigma;
-    itk::Matrix<double, ImageDimension, ImageDimension> Cov;
-    Cov.Fill(0.0);
     for( unsigned int d = 0; d < ImageDimension; d++ )
       {
       sigma[d] = s[d];
-      Cov(d,d) = s[d]*s[d];
       }
     this->SetSigma( sigma );
-    this->SetCovariance( Cov );
     }
   itkGetConstMacro( Sigma, ArrayType );
 
   /**
-   * Set/Get Covariance
+   * Set/Get covariance
    */
-  virtual void SetCovariance( itk::Matrix<double, ImageDimension, ImageDimension> Cov){
-    itk::Matrix<double, ImageDimension, ImageDimension> matrix;
-    ArrayType sigma;
-    for (int i = 0; i < ImageDimension; ++i)
+  virtual void SetCovariance( const SquareArrayType cov )
     {
-      for (int j = 0; j < ImageDimension; ++j)
+    itkDebugMacro( "setting Covariance to " << cov );
+    if ( this->m_Covariance != cov )
       {
-        matrix(i,j) = Cov(i,j);
+      this->m_Covariance = cov;
+      for( int d = 0; d < ImageDimension; d++ )
+        {
+        this->m_Sigma[d] = sqrt( cov[d*ImageDimension + d] );
+        }
       }
-      // sigma[i] = sqrt(Cov(i,i));
-      this->m_Sigma[i] = sqrt(Cov(i,i));
+      this->ComputeBoundingBox();
+      this->Modified();
     }
-    this->m_Covariance = matrix;
-    // this->SetSigma(sigma);
-  }
-  itkGetConstObjectMacro( Covariance, itk::Matrix<double, ImageDimension, ImageDimension> );
-  // itkGetConstReferenceObjectMacro( Covariance, itk::Matrix<double, ImageDimension, ImageDimension> );
-  // virtual itk::Matrix<double, ImageDimension, ImageDimension>
-  //   GetCovariance() const { return this->m_Covariance; }
+  virtual void SetCovariance( RealType *cov )
+    {
+      SquareArrayType covariance;
+      for( int i = 0; i < ImageDimension; i++ )
+      {
+        for( int j = 0; j < ImageDimension; j++ )
+        {
+          covariance[i*ImageDimension + j] = cov[i*ImageDimension + j];
+        }
+      }
+      this->SetCovariance( covariance );
+    }
+  itkGetConstMacro( Covariance, SquareArrayType );
 
   /**
    * Set/Get alpha
@@ -193,13 +204,13 @@ protected:
     ContinuousIndexType center,
     itk::Matrix<double, ImageDimension, ImageDimension> SigmaInverse ) const;
 
-  ArrayType                                           m_Sigma;
-  RealType                                            m_Alpha;
-  itk::Matrix<double, ImageDimension, ImageDimension> m_Covariance;
+  SquareArrayType                           m_Covariance;
+  ArrayType                                 m_Sigma;
+  RealType                                  m_Alpha;
 
-  ArrayType                                           m_BoundingBoxStart;
-  ArrayType                                           m_BoundingBoxEnd;
-  ArrayType                                           m_CutoffDistance;
+  ArrayType                                 m_BoundingBoxStart;
+  ArrayType                                 m_BoundingBoxEnd;
+  ArrayType                                 m_CutoffDistance;
 
 private:
   OrientedGaussianInterpolateImageFunction( const Self& ) ITK_DELETE_FUNCTION;

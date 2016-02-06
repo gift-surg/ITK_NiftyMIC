@@ -36,7 +36,12 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 {
   this->m_Alpha = 1.0;
   this->m_Sigma.Fill( 1.0 );
-  this->m_Covariance.SetIdentity();
+  this->m_Covariance.Fill( 0.0 );
+
+  for( unsigned int d = 0; d < ImageDimension; d++ )
+    {
+    this->m_Covariance[d*ImageDimension + d] = 1.0;
+    }
 }
 
 /**
@@ -126,7 +131,16 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
   // std::cout << "S = \n" << S << std::endl;
 
   /* Scale rotated inverse Gaussian needed for exponential function */
-  itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv = S * this->m_Covariance.GetInverse() * S;
+  itk::Matrix<double, ImageDimension, ImageDimension> covariance;
+  for (int i = 0; i < ImageDimension; i++ )
+  {
+    for (int j = 0; j < ImageDimension; j++ )
+    {
+      covariance(i,j) = this->m_Covariance[i*ImageDimension + j];
+    }
+  }
+
+  itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv = S * covariance.GetInverse() * S;
   // std::cout << "CovScaledInv = \n" << CovScaledInv << std::endl;
 
   RealType w = 0.0;
