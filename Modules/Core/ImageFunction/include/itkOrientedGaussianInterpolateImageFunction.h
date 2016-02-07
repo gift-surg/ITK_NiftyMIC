@@ -113,9 +113,9 @@ public:
         {
         this->m_Covariance[d*ImageDimension + d] = s[d]*s[d];
         }
-      }
       this->ComputeBoundingBox();
       this->Modified();
+      }
     }
   virtual void SetSigma( RealType *s )
     {
@@ -141,9 +141,9 @@ public:
         {
         this->m_Sigma[d] = sqrt( cov[d*ImageDimension + d] );
         }
-      }
       this->ComputeBoundingBox();
       this->Modified();
+      }
     }
   virtual void SetCovariance( RealType *cov )
     {
