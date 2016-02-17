@@ -23,7 +23,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkImageToImageFilter.h"
 #include "itkExtrapolateImageFunction.h"
-#include "itkLinearInterpolateImageFunction.h"
+// #include "itkLinearInterpolateImageFunction.h"
+#include "itkOrientedGaussianInterpolateImageFunction.h"
 #include "itkSize.h"
 #include "itkDefaultConvertPixelTraits.h"
 #include "itkDataObjectDecorator.h"
@@ -140,10 +141,10 @@ public:
 
   typedef typename InterpolatorConvertType::ComponentType ComponentType;
 
-  typedef LinearInterpolateImageFunction< InputImageType,
-                                          TInterpolatorPrecisionType >   LinearInterpolatorType;
-  typedef typename LinearInterpolatorType::Pointer
-  LinearInterpolatorPointerType;
+  typedef OrientedGaussianInterpolateImageFunction< InputImageType,
+                                          TInterpolatorPrecisionType >   OrientedGaussianInterpolatorType;
+  typedef typename OrientedGaussianInterpolatorType::Pointer
+  OrientedGaussianInterpolatorPointerType;
 
   /** Extrapolator typedef. */
   typedef ExtrapolateImageFunction< InputImageType,
@@ -168,9 +169,11 @@ public:
 
   typedef typename PixelConvertType::ComponentType PixelComponentType;
 
-  /** Input pixel continuous index typdef */
+  /** Input and output pixel continuous index typdef */
   typedef ContinuousIndex< TTransformPrecisionType, ImageDimension >
   ContinuousInputIndexType;
+  typedef ContinuousIndex< TTransformPrecisionType, ImageDimension >
+  ContinuousOutputIndexType;
 
   /** Typedef to describe the output image region type. */
   typedef typename TOutputImage::RegionType OutputImageRegionType;
@@ -182,6 +185,15 @@ public:
 
   /** Typedef the reference image type to be the ImageBase of the OutputImageType */
   typedef ImageBase<ImageDimension> ReferenceImageBaseType;
+
+  /** RealType typedef support. */
+  typedef double RealType;
+
+  /** Array typedef support */
+  typedef FixedArray<RealType, ImageDimension> ArrayType;
+
+  /** Square array typedef support */
+  typedef FixedArray<double, ImageDimension*ImageDimension> SquareArrayType;
 
   /** Get/Set the coordinate transformation.
    * Set the coordinate transform to use for resampling.  Note that this must
@@ -262,6 +274,83 @@ public:
   itkBooleanMacro(UseReferenceImage);
   itkGetConstMacro(UseReferenceImage, bool);
 
+
+  /**
+   * Set/Get sigma
+   */
+  virtual void SetSigma( const ArrayType s )
+    {
+    itkDebugMacro( "setting Sigma to " << s );
+    if( this->m_Sigma != s )
+      {
+      this->m_Sigma = s;
+      this->m_Covariance.Fill(0.0);
+      for( int d = 0; d < ImageDimension; d++ )
+        {
+        this->m_Covariance[d*ImageDimension + d] = s[d]*s[d];
+        }
+      this->ComputeBoundingBox();
+      this->Modified();
+      }
+    }
+  virtual void SetSigma( RealType *s )
+    {
+    ArrayType sigma;
+    for( unsigned int d = 0; d < ImageDimension; d++ )
+      {
+      sigma[d] = s[d];
+      }
+    this->SetSigma( sigma );
+    }
+  itkGetConstMacro( Sigma, ArrayType );
+
+  /**
+   * Set/Get covariance
+   */
+  virtual void SetCovariance( const SquareArrayType cov )
+    {
+    itkDebugMacro( "setting Covariance to " << cov );
+    if ( this->m_Covariance != cov )
+      {
+      this->m_Covariance = cov;
+      for( int d = 0; d < ImageDimension; d++ )
+        {
+        this->m_Sigma[d] = sqrt( cov[d*ImageDimension + d] );
+        }
+      this->ComputeBoundingBox();
+      this->Modified();
+      }
+    }
+  virtual void SetCovariance( RealType *cov )
+    {
+      SquareArrayType covariance;
+      for( int i = 0; i < ImageDimension; i++ )
+      {
+        for( int j = 0; j < ImageDimension; j++ )
+        {
+          covariance[i*ImageDimension + j] = cov[i*ImageDimension + j];
+        }
+      }
+      this->SetCovariance( covariance );
+    }
+  itkGetConstMacro( Covariance, SquareArrayType );
+
+  /**
+   * Set/Get alpha
+   */
+  virtual void SetAlpha( const RealType a )
+    {
+    itkDebugMacro( "setting Alpha to " << a );
+    if( Math::NotExactlyEquals(this->m_Alpha, a) )
+      {
+      this->m_Alpha = a;
+      this->ComputeBoundingBox();
+      this->Modified();
+      }
+    }
+  itkGetConstMacro( Alpha, RealType );
+
+
   /** AdjointOrientedGaussianInterpolateImageFilter produces an image which is a different size
    * than its input.  As such, it needs to provide an implementation
    * for GenerateOutputInformation() in order to inform the pipeline
@@ -278,11 +367,11 @@ public:
 
   /** This method is used to set the state of the filter before
    * multi-threading. */
-  virtual void BeforeThreadedGenerateData() ITK_OVERRIDE;
+  // virtual void BeforeThreadedGenerateData() ITK_OVERRIDE;
 
   /** This method is used to set the state of the filter after
    * multi-threading. */
-  virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
+  // virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
 
   /** Method Compute the Modified Time based on changed to the components. */
   ModifiedTimeType GetMTime(void) const ITK_OVERRIDE;
@@ -300,6 +389,13 @@ protected:
   }
   void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
+  virtual void ComputeBoundingBox();
+
+  virtual RealType ComputeExponentialFunction(
+    IndexType point,
+    ContinuousOutputIndexType center,
+    itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv ) const;
+
   /** Override VeriyInputInformation() since this filter's inputs do
    * not need to occoupy the same physical space.
    *
@@ -316,25 +412,22 @@ protected:
    * specified by the parameter "outputRegionForThread"
    * \sa ImageToImageFilter::ThreadedGenerateData(),
    *     ImageToImageFilter::GenerateData() */
-  virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
-                                    ThreadIdType threadId) ITK_OVERRIDE;
+  // virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
+                                    // ThreadIdType threadId) ITK_OVERRIDE;
+  virtual void GenerateData();
 
-  /** Default implementation for resampling that works for any
-   * transformation type. */
-  virtual void NonlinearThreadedGenerateData(const OutputImageRegionType &
-                                             outputRegionForThread,
-                                             ThreadIdType threadId);
+  // /** Default implementation for resampling that works for any
+  //  * transformation type. */
+  // virtual void NonlinearThreadedGenerateData(const OutputImageRegionType &
+  //                                            outputRegionForThread,
+  //                                            ThreadIdType threadId);
 
   /** Implementation for resampling that works for with linear
    *  transformation types.
    */
-  virtual void LinearThreadedGenerateData(const OutputImageRegionType &
-                                          outputRegionForThread,
-                                          ThreadIdType threadId);
-
-  virtual PixelType CastPixelWithBoundsChecking( const InterpolatorOutputType value,
-                                                 const ComponentType minComponent,
-                                                 const ComponentType maxComponent) const;
+  // virtual void LinearThreadedGenerateData(const OutputImageRegionType &
+  //                                         outputRegionForThread,
+  //                                         ThreadIdType threadId);
 
 private:
   AdjointOrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;
@@ -353,6 +446,15 @@ private:
   DirectionType   m_OutputDirection;      // output image direction cosines
   IndexType       m_OutputStartIndex;     // output image start index
   bool            m_UseReferenceImage;
+
+
+  SquareArrayType                           m_Covariance;
+  ArrayType                                 m_Sigma;
+  RealType                                  m_Alpha;
+
+  ArrayType                                 m_BoundingBoxStart;
+  ArrayType                                 m_BoundingBoxEnd;
+  ArrayType                                 m_CutoffDistance;
 
 };
 } // end namespace itk
