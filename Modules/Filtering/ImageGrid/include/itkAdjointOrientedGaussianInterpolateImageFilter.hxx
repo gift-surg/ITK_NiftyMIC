@@ -39,14 +39,14 @@ template< typename TInputImage,
 AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::AdjointOrientedGaussianInterpolateImageFilter()
 {
-  m_OutputOrigin.Fill(0.0);
-  m_OutputSpacing.Fill(1.0);
-  m_OutputDirection.SetIdentity();
+  this->m_OutputOrigin.Fill(0.0);
+  this->m_OutputSpacing.Fill(1.0);
+  this->m_OutputDirection.SetIdentity();
 
-  m_UseReferenceImage = false;
+  this->m_UseReferenceImage = false;
 
-  m_Size.Fill(0);
-  m_OutputStartIndex.Fill(0);
+  this->m_Size.Fill(0);
+  this->m_OutputStartIndex.Fill(0);
 
   // Pipeline input configuration
 
@@ -61,12 +61,12 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   Self::AddRequiredInputName("Transform");
   Self::SetTransform(IdentityTransform< TTransformPrecisionType, ImageDimension >::New());
 
-  m_Interpolator = dynamic_cast< InterpolatorType * >
-    ( OrientedGaussianInterpolatorType::New().GetPointer() );
+  this->m_Interpolator = dynamic_cast< InterpolatorType * >
+    ( LinearInterpolatorType::New().GetPointer() );
 
-  m_Extrapolator = ITK_NULLPTR;
+  this->m_Extrapolator = ITK_NULLPTR;
 
-  m_DefaultPixelValue
+  this->m_DefaultPixelValue
     = NumericTraits<PixelType>::ZeroValue( m_DefaultPixelValue );
 
   this->m_Alpha = 1.0;
@@ -190,6 +190,48 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 }
 
 /**
+ * Cast from interpolotor output to pixel type
+ */
+template< typename TInputImage,
+          typename TOutputImage,
+          typename TInterpolatorPrecisionType,
+          typename TTransformPrecisionType >
+typename AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+::PixelType
+AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+::CastPixelWithBoundsChecking(const InterpolatorOutputType value,
+                              const ComponentType minComponent,
+                              const ComponentType maxComponent ) const
+{
+  const unsigned int nComponents = InterpolatorConvertType::GetNumberOfComponents(value);
+  PixelType          outputValue;
+
+  NumericTraits<PixelType>::SetLength( outputValue, nComponents );
+
+  for (unsigned int n=0; n<nComponents; n++)
+    {
+    ComponentType component = InterpolatorConvertType::GetNthComponent( n, value );
+
+    if ( component < minComponent )
+      {
+      PixelConvertType::SetNthComponent( n, outputValue, static_cast<PixelComponentType>( minComponent ) );
+      }
+    else if ( component > maxComponent )
+      {
+      PixelConvertType::SetNthComponent( n, outputValue, static_cast<PixelComponentType>( maxComponent ) );
+      }
+    else
+      {
+      PixelConvertType::SetNthComponent(n, outputValue,
+                                        static_cast<PixelComponentType>( component ) );
+      }
+    }
+
+  return outputValue;
+}
+
+
+/**
  * GenerateData
  */
 template< typename TInputImage,
@@ -202,20 +244,24 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 {
 
   // Get the output pointers
-  OutputImageType *outputPtr = this->GetOutput();
+  typename OutputImageType::Pointer outputPtr = this->GetOutput();
 
   // Get this input pointers
-  const InputImageType *inputPtr = this->GetInput();
+  typename InputImageType::ConstPointer inputPtr = this->GetInput();
 
   // Get the input transform
-  const TransformType *transformPtr = this->GetTransform();
+  // const TransformType *transformPtr = this->GetTransform();
+  typename TransformType::ConstPointer transformPtr = this->GetTransform();
 
   // Get input and output region
-  ImageRegion<ImageDimension> inputRegion = inputPtr->GetRequestedRegion();
+  // ImageRegion<ImageDimension> inputRegion = inputPtr->GetRequestedRegion();
+  // ImageRegion<ImageDimension> inputRegion = inputPtr->GetBufferedRegion();
+  InputImageRegionType inputRegion = inputPtr->GetBufferedRegion();
 
   // Get input and output region size
   const typename InputImageRegionType::SizeType &inputRegionSize = inputRegion.GetSize();
-  const typename OutputImageRegionType::SizeType &outputRegionSize = outputPtr->GetRequestedRegion().GetSize();
+  // const typename OutputImageRegionType::SizeType &outputRegionSize = outputPtr->GetRequestedRegion().GetSize();
+  const typename OutputImageRegionType::SizeType &outputRegionSize = outputPtr->GetBufferedRegion().GetSize();
 
   // Define a few indices that will be used to translate from an input pixel
   // to an output pixel
@@ -229,18 +275,25 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   IndexType outputIndex;
 
   typedef typename InterpolatorType::OutputType OutputType;
-
   PixelType pixval;
   OutputType value;
 
+  // Min/max values of the output pixel type AND these values
+  // represented as the output type of the interpolator
+  const PixelComponentType minValue =  NumericTraits< PixelComponentType >::NonpositiveMin();
+  const PixelComponentType maxValue =  NumericTraits< PixelComponentType >::max();
+  const ComponentType minOutputValue = static_cast< ComponentType >( minValue );
+  const ComponentType maxOutputValue = static_cast< ComponentType >( maxValue );
 
   // Cache information from the superclass
-  PixelType defaultValue = this->GetDefaultPixelValue();
+  // PixelType defaultValue = this->GetDefaultPixelValue();
 
   // Create an iterator that will walk the input region
   ImageRegionConstIteratorWithIndex<InputImageType> inIt( inputPtr, inputRegion );
 
   this->AllocateOutputs();
+  outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+
   this->ComputeBoundingBox();
 
   // ME: Compute scaled oriented PSF for voxel space
@@ -252,7 +305,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
     {
     S(d,d) = spacing[d];
     }
-  std::cout << "S = \n" << S << std::endl;
+  // std::cout << "S = \n" << S << std::endl;
 
   /* Scale rotated inverse Gaussian needed for exponential function */
   itk::Matrix<double, ImageDimension, ImageDimension> covariance;
@@ -267,9 +320,9 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv = S * covariance.GetInverse() * S;
   // std::cout << "CovScaledInv = \n" << CovScaledInv << std::endl;
 
-  std::cout << "m_CutoffDistance = " << m_CutoffDistance << std::endl;
-  std::cout << "m_BoundingBoxStart = " << m_BoundingBoxStart << std::endl;
-  std::cout << "m_BoundingBoxEnd = " << m_BoundingBoxEnd << std::endl;
+  // std::cout << "m_CutoffDistance = " << m_CutoffDistance << std::endl;
+  // std::cout << "m_BoundingBoxStart = " << m_BoundingBoxStart << std::endl;
+  // std::cout << "m_BoundingBoxEnd = " << m_BoundingBoxEnd << std::endl;
 
   // std::cout << "inputRegion = " << inputRegion << std::endl;
 
@@ -296,7 +349,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
       for( unsigned int d = 0; d < ImageDimension; d++ )
         {
         int boundingBoxSize = static_cast<int>(
-          this->m_BoundingBoxEnd[d] - this->m_BoundingBoxStart[d] + 0.5 );  // = size[d]-1
+          this->m_BoundingBoxEnd[d] - this->m_BoundingBoxStart[d] + 0.5 );  // = size[d]
         int begin = vnl_math_max( 0, static_cast<int>( std::floor( outputCIndex[d] -
           this->m_BoundingBoxStart[d] - this->m_CutoffDistance[d] ) ) );
         int end = vnl_math_min( boundingBoxSize, static_cast<int>( std::ceil(
@@ -309,6 +362,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
         outputRegion.SetSize( d, end - begin );
 
         // std::cout << "begin = " << begin << ", end = " << end << std::endl;
+        // std::cout << "boundingBoxSize = " << boundingBoxSize << std::endl;
         }
 
       // std::cout << "outputRegion = " << outputRegion << std::endl;
@@ -329,24 +383,27 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
       for( outIt.GoToBegin(); !outIt.IsAtEnd(); ++outIt )
         {
           w = this->ComputeExponentialFunction(outIt.GetIndex(), outputCIndex, CovScaledInv);
+          value = outIt.Get() + inIt.Get()*w/sum_m;
+          // pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
           // std::cout << "weight = " << w << std::endl;
           // std::cout << "weight_sum = " << sum_m << std::endl;
-          outIt.Set(outIt.Get() + inIt.Get()*w/sum_m);
+          // std::cout << "inIt.Get() = " << inIt.Get() << std::endl;
+          // std::cout << "value = Get() + inIt.Get()*w/sum_m  = " << value << std::endl;
+          // std::cout << "value = outIt.Get() + inIt.Get()*w/sum_m  = " << outIt.Get() << " + " << inIt.Get() << "*" << w << "/" << sum_m << " = " << value << std::endl;
+          outIt.Set(value);
         }
 
       ++inIt;
     }
 
-
-  /** DEBUGGING OUTPUT **/
-  std::cout << "sizeInput = " << inputRegionSize << std::endl;
-  std::cout << "sizeOutput = " << outputRegionSize << std::endl;
-  std::cout << "inputIndex = " << inputIndex << std::endl;
-  std::cout << "inputPoint = " << inputPoint << std::endl;
-  std::cout << "outputPoint = " << outputPoint << std::endl;
-  std::cout << "outputIndex = " << outputIndex << std::endl;
-  std::cout << "outputCIndex = " << outputCIndex << std::endl;
-
+  // /** DEBUGGING OUTPUT **/
+  // std::cout << "sizeInput = " << inputRegionSize << std::endl;
+  // std::cout << "sizeOutput = " << outputRegionSize << std::endl;
+  // std::cout << "inputIndex = " << inputIndex << std::endl;
+  // std::cout << "inputPoint = " << inputPoint << std::endl;
+  // std::cout << "outputPoint = " << outputPoint << std::endl;
+  // std::cout << "outputIndex = " << outputIndex << std::endl;
+  // std::cout << "outputCIndex = " << outputCIndex << std::endl;
 
   // ImageAlgorithm::Copy(inputPtr, outputPtr, outputPtr->GetRequestedRegion(),
   //                      outputPtr->GetRequestedRegion() );

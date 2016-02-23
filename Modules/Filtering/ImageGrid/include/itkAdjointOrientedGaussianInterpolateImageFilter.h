@@ -23,8 +23,8 @@
 #include "itkImageRegionIterator.h"
 #include "itkImageToImageFilter.h"
 #include "itkExtrapolateImageFunction.h"
-// #include "itkLinearInterpolateImageFunction.h"
-#include "itkOrientedGaussianInterpolateImageFunction.h"
+#include "itkLinearInterpolateImageFunction.h"
+// #include "itkOrientedGaussianInterpolateImageFunction.h"
 #include "itkSize.h"
 #include "itkDefaultConvertPixelTraits.h"
 #include "itkDataObjectDecorator.h"
@@ -141,10 +141,10 @@ public:
 
   typedef typename InterpolatorConvertType::ComponentType ComponentType;
 
-  typedef OrientedGaussianInterpolateImageFunction< InputImageType,
-                                          TInterpolatorPrecisionType >   OrientedGaussianInterpolatorType;
-  typedef typename OrientedGaussianInterpolatorType::Pointer
-  OrientedGaussianInterpolatorPointerType;
+  typedef LinearInterpolateImageFunction< InputImageType,
+                                          TInterpolatorPrecisionType >   LinearInterpolatorType;
+  typedef typename LinearInterpolatorType::Pointer
+  LinearInterpolatorPointerType;
 
   /** Extrapolator typedef. */
   typedef ExtrapolateImageFunction< InputImageType,
@@ -164,6 +164,8 @@ public:
   /** Image pixel value typedef. */
   typedef typename TOutputImage::PixelType PixelType;
   typedef typename TInputImage::PixelType  InputPixelType;
+  // typedef double PixelType;
+  // typedef double  InputPixelType;
 
   typedef DefaultConvertPixelTraits<PixelType> PixelConvertType;
 
@@ -401,7 +403,7 @@ protected:
    *
    * \sa ProcessObject::VerifyInputInformation
    */
-  virtual void VerifyInputInformation() ITK_OVERRIDE { }
+  // virtual void VerifyInputInformation() ITK_OVERRIDE { }
 
   /** AdjointOrientedGaussianInterpolateImageFilter can be implemented as a multithreaded filter.
    * Therefore, this implementation provides a ThreadedGenerateData()
@@ -414,7 +416,7 @@ protected:
    *     ImageToImageFilter::GenerateData() */
   // virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                                     // ThreadIdType threadId) ITK_OVERRIDE;
-  virtual void GenerateData();
+  virtual void GenerateData() ITK_OVERRIDE;
 
   // /** Default implementation for resampling that works for any
   //  * transformation type. */
@@ -428,6 +430,10 @@ protected:
   // virtual void LinearThreadedGenerateData(const OutputImageRegionType &
   //                                         outputRegionForThread,
   //                                         ThreadIdType threadId);
+
+  virtual PixelType CastPixelWithBoundsChecking( const InterpolatorOutputType value,
+                                                 const ComponentType minComponent,
+                                                 const ComponentType maxComponent) const;
 
 private:
   AdjointOrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;

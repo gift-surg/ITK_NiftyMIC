@@ -88,7 +88,6 @@ OrientedGaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::EvaluateAtContinuousIndex( const ContinuousIndexType & cindex, OutputType *grad ) const
 {
   // ME: Where is ImageDimension defined?
-  vnl_vector<RealType> erfArray[ImageDimension];  // ME: error function
 
   RealType sum_me = 0.0;
   RealType sum_m = 0.0;
