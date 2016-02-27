@@ -369,11 +369,11 @@ public:
 
   /** This method is used to set the state of the filter before
    * multi-threading. */
-  // virtual void BeforeThreadedGenerateData() ITK_OVERRIDE;
+  virtual void BeforeThreadedGenerateData() ITK_OVERRIDE;
 
   /** This method is used to set the state of the filter after
    * multi-threading. */
-  // virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
+  virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
 
   /** Method Compute the Modified Time based on changed to the components. */
   ModifiedTimeType GetMTime(void) const ITK_OVERRIDE;
@@ -418,6 +418,19 @@ protected:
                                     // ThreadIdType threadId) ITK_OVERRIDE;
   virtual void GenerateData() ITK_OVERRIDE;
 
+
+  /** ResampleImageFilter can be implemented as a multithreaded filter.
+   * Therefore, this implementation provides a ThreadedGenerateData()
+   * routine which is called for each processing thread. The output
+   * image data is allocated automatically by the superclass prior
+   * to calling ThreadedGenerateData().
+   * ThreadedGenerateData can only write to the portion of the output image
+   * specified by the parameter "outputRegionForThread"
+   * \sa ImageToImageFilter::ThreadedGenerateData(),
+   *     ImageToImageFilter::GenerateData() */
+  virtual void ThreadedGenerateData(const InputImageRegionType & inputRegionForThread,
+                                    ThreadIdType threadId);
+
   // /** Default implementation for resampling that works for any
   //  * transformation type. */
   // virtual void NonlinearThreadedGenerateData(const OutputImageRegionType &
@@ -434,6 +447,18 @@ protected:
   virtual PixelType CastPixelWithBoundsChecking( const InterpolatorOutputType value,
                                                  const ComponentType minComponent,
                                                  const ComponentType maxComponent) const;
+
+
+  /** Static function used as a "callback" by the MultiThreader.  The threading
+   * library will call this routine for each thread, which will delegate the
+   * control to ThreadedGenerateData(). */
+  static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg) ITK_OVERRIDE;
+
+  /** Internal structure used for passing image data into the threading library
+    */
+  struct ThreadStruct {
+    Pointer Filter;
+  };
 
 private:
   AdjointOrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;
@@ -461,6 +486,9 @@ private:
   ArrayType                                 m_BoundingBoxStart;
   ArrayType                                 m_BoundingBoxEnd;
   ArrayType                                 m_CutoffDistance;
+  // OutputImagePointer                 *m_OutputPtrThread;
+  // std::vector< std::shared_ptr<OutputImagePointer> >            m_OutputPtrThread;
+  // std::vector< OutputImageType >            m_OutputPtrThread;
 
 };
 } // end namespace itk
