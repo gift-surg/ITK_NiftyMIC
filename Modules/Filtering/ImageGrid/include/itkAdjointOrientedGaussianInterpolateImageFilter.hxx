@@ -253,6 +253,15 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 
   // Set up the multithreaded processing
   ThreadStruct str;
+
+  // Create additional filter with swaped input and output
+  // Necessary for split input image region in this->ThreaderCallback
+  Pointer foo = AdjointOrientedGaussianInterpolateImageFilter<TOutputImage,TInputImage>::New();
+  foo->SetInput(this->GetOutput());
+  foo->SetOutputParametersFromImage(this->GetInput()); //seems not to be necessary
+  foo->GetOutput()->SetRequestedRegion(this->GetInput()->GetLargestPossibleRegion()); //necessary for SplitRequestedRegion
+
+  str.FilterFoo = foo; // To split input image region in this->ThreaderCallback
   str.Filter = this;
 
   // Get the input pointer
@@ -266,8 +275,6 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 
   // multithread the execution
   this->GetMultiThreader()->SingleMethodExecute();
-
-  std::cout << this->GetMultiThreader() << std::endl;
 
   // Call a method that can be overridden by a subclass to perform
   // some calculations after all the threads have completed
@@ -340,7 +347,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   // execute the actual method with appropriate input region
   // first find out how many pieces extent can be split into.
   typename TInputImage::RegionType splitRegion;
-  total = str->Filter->SplitRequestedRegion(threadId, threadCount,
+  total = str->FilterFoo->SplitRequestedRegion(threadId, threadCount,
                                             splitRegion);
 
   if ( threadId < total )

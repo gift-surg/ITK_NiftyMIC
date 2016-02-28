@@ -458,6 +458,7 @@ protected:
     */
   struct ThreadStruct {
     Pointer Filter;
+    Pointer FilterFoo; //Used to split input image region
   };
 
 private:
