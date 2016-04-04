@@ -27,6 +27,8 @@
 #include "itkSpecialCoordinatesImage.h"
 #include "itkDefaultConvertPixelTraits.h"
 
+#include "itkAddImageFilter.h"
+
 namespace itk
 {
 /**
@@ -251,8 +253,17 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   // separate threads
   this->BeforeThreadedGenerateData();
 
+  // Compute bounding box for Gaussian exponential
+  this->ComputeBoundingBox();
+
   // Set up the multithreaded processing
   ThreadStruct str;
+
+  // Get the output pointer
+  typename OutputImageType::Pointer outputPtr = this->GetOutput();
+
+  // Initialize output
+  outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
 
   // Create additional filter with swaped input and output
   // Necessary for split input image region in this->ThreaderCallback
@@ -264,7 +275,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   str.FilterFoo = foo; // To split input image region in this->ThreaderCallback
   str.Filter = this;
 
-  // Get the input pointer
+  // Get the input pointer and prepare multithreader
   typename InputImageType::ConstPointer inputPtr = this->GetInput();
 
   const ImageRegionSplitterBase * splitter = this->GetImageRegionSplitter();
@@ -272,6 +283,18 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 
   this->GetMultiThreader()->SetNumberOfThreads( validThreads );
   this->GetMultiThreader()->SetSingleMethod(this->ThreaderCallback, &str);
+
+  // Create valid threads amount of output images for threads working independently
+  m_OutputPtrThread = std::vector< OutputImagePointer>(validThreads);
+
+  for (int i = 0; i < validThreads; ++i)
+  {
+      m_OutputPtrThread[i] = OutputImageType::New();
+      m_OutputPtrThread[i]->CopyInformation(outputPtr);
+      m_OutputPtrThread[i]->SetBufferedRegion( outputPtr->GetRequestedRegion() );
+      m_OutputPtrThread[i]->Allocate();
+      m_OutputPtrThread[i]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+  }
 
   // multithread the execution
   this->GetMultiThreader()->SingleMethodExecute();
@@ -282,10 +305,9 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 
 }
 
+
 /**
  * Set up state of filter before multi-threading.
- * InterpolatorType::SetInputImage is not thread-safe and hence
- * has to be set up before ThreadedGenerateData
  */
 template< typename TInputImage,
           typename TOutputImage,
@@ -295,33 +317,6 @@ void
 AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::BeforeThreadedGenerateData()
 {
-  // Get the output pointer
-  typename OutputImageType::Pointer outputPtr = this->GetOutput();
-
-  // Initialize output
-  outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
-
-  // Compute bounding box for Gaussian exponential
-  this->ComputeBoundingBox();
-
-
-  // const itk::ThreadIdType numberOfThreads = this->GetNumberOfThreads();
-  // // std::cout << "numberOfThreads = " << numberOfThreads << std::endl;
-
-  // this->m_OutputPtrThread.resize( numberOfThreads );
-  // // m_OutputPtrThread = new OutputImageType[numberOfThreads];
-
-
-  // for( itk::ThreadIdType ii = 0; ii < numberOfThreads; ++ii )
-  //   {
-  //     // m_OutputPtrThread[ii] = std::make_shared<OutputImageType>(dynamic_cast<OutputImageType>(outputPtr));
-  //     // m_OutputPtrThread[ii] = std::make_shared<OutputImageType>(OutputImageType::New());
-  //     // m_OutputPtrThread[ii] = std::shared_ptr<OutputImageType>();
-  //     // m_OutputPtrThread[ii] = dynamic_cast<OutputImagePointer>(outputPtr);
-  //     m_OutputPtrThread[ii] = OutputImageType::New();
-  //     // std::cout << m_OutputPtrThread[ii].GetSpacing() << std::endl;
-  //   }
-
 
 }
 
@@ -377,6 +372,67 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 ::AfterThreadedGenerateData()
 {
 
+  // Get the output pointer
+  typename OutputImageType::Pointer outputPtr = this->GetOutput();
+
+  // Get number of valid threads
+  const unsigned int validThreads = this->GetMultiThreader()->GetNumberOfThreads();
+
+  // std::cout << "validThreads = " << validThreads << std::endl;
+
+  // Get output region iterator
+  typedef ImageRegionIteratorWithIndex<TOutputImage> OutputIterator;
+
+  // Sum output images computed by each thread
+  if ( validThreads > 1 )
+  {
+    typedef itk::AddImageFilter<TOutputImage,TOutputImage,TOutputImage> AddImageFilterType;
+    typename AddImageFilterType::Pointer adder = AddImageFilterType::New();
+
+    // adder->InPlaceOn(); // With this line I get random results for unitTests: 2D Cross!?
+    adder->SetInput1(this->m_OutputPtrThread[0]);
+
+    for (int i = 1; i < validThreads; ++i)
+    {
+      adder->SetInput2(this->m_OutputPtrThread[i]);
+      adder->Update();
+
+      adder->SetInput1(adder->GetOutput());
+    }
+    adder->Update();
+
+    // Update output image data according to summed up image
+    OutputIterator adderOutIt( adder->GetOutput(), outputPtr->GetBufferedRegion() );
+
+    OutputIterator outIt( outputPtr, outputPtr->GetBufferedRegion() );
+
+    outIt.GoToBegin();
+    adderOutIt.GoToBegin();
+
+    while( !outIt.IsAtEnd() )
+    {
+      outIt.Set( adderOutIt.Get() );
+      ++outIt;
+      ++adderOutIt;
+    }
+  }
+  // only one thread; i.e. set output equal to the result of the one thread
+  else
+  {
+    OutputIterator adderOutIt( this->m_OutputPtrThread[0], outputPtr->GetBufferedRegion() );
+    OutputIterator outIt( outputPtr, outputPtr->GetBufferedRegion() );
+
+    outIt.GoToBegin();
+    adderOutIt.GoToBegin();
+
+    while( !outIt.IsAtEnd() )
+    {
+      outIt.Set( adderOutIt.Get() );
+      ++outIt;
+      ++adderOutIt;
+    }
+  }
+
 }
 
 
@@ -394,7 +450,8 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 {
 
   // Get the output pointer
-  typename OutputImageType::Pointer outputPtr = this->GetOutput();
+  // typename OutputImageType::Pointer outputPtr = this->GetOutput();
+  typename OutputImageType::Pointer outputPtr = this->m_OutputPtrThread[threadId];
 
   // Get the input pointer
   typename InputImageType::ConstPointer inputPtr = this->GetInput();

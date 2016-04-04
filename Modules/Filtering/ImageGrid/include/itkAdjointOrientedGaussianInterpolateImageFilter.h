@@ -487,9 +487,7 @@ private:
   ArrayType                                 m_BoundingBoxStart;
   ArrayType                                 m_BoundingBoxEnd;
   ArrayType                                 m_CutoffDistance;
-  // OutputImagePointer                 *m_OutputPtrThread;
-  // std::vector< std::shared_ptr<OutputImagePointer> >            m_OutputPtrThread;
-  // std::vector< OutputImageType >            m_OutputPtrThread;
+  std::vector< OutputImagePointer>          m_OutputPtrThread;
 
 };
 } // end namespace itk
