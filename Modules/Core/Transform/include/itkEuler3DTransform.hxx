@@ -261,9 +261,9 @@ Euler3DTransform<TParametersValueType>
 
   if( m_ComputeZYX )
     {
-    jacobian[0][0] = ( cz * sy * cx + sz * sx ) * py + ( -cz * sy * sx + sz * cx ) * pz;
-    jacobian[1][0] = ( sz * sy * cx - cz * sx ) * py + ( -sz * sy * sx - cz * cx ) * pz;
-    jacobian[2][0] = ( cy * cx ) * py + ( -cy * sx ) * pz;
+    jacobian[0][0] = ( cz * sy * cx + sz * sx ) * py + ( -cz * sy * sx + sz * cx ) * pz; // dT_0/dAngle_x
+    jacobian[1][0] = ( sz * sy * cx - cz * sx ) * py + ( -sz * sy * sx - cz * cx ) * pz; // dT_1/dAngle_x
+    jacobian[2][0] = ( cy * cx ) * py + ( -cy * sx ) * pz; // dT_2/dAngle_x
 
     jacobian[0][1] = ( -cz * sy ) * px + ( cz * cy * sx ) * py + ( cz * cy * cx ) * pz;
     jacobian[1][1] = ( -sz * sy ) * px + ( sz * cy * sx ) * py + ( sz * cy * cx ) * pz;

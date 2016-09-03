@@ -15,8 +15,8 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef itkAdjointOrientedGaussianInterpolateImageFilter_h
-#define itkAdjointOrientedGaussianInterpolateImageFilter_h
+#ifndef itkOrientedGaussianInterpolateImageFilter_h
+#define itkOrientedGaussianInterpolateImageFilter_h
 
 #include "itkFixedArray.h"
 #include "itkTransform.h"
@@ -32,10 +32,10 @@
 
 namespace itk
 {
-/** \class AdjointOrientedGaussianInterpolateImageFilter
+/** \class OrientedGaussianInterpolateImageFilter
  * \brief Resample an image via a coordinate transform
  *
- * AdjointOrientedGaussianInterpolateImageFilter resamples an existing image through some coordinate
+ * OrientedGaussianInterpolateImageFilter resamples an existing image through some coordinate
  * transform, interpolating via some image function.  The class is templated
  * over the types of the input and output images.
  *
@@ -80,19 +80,19 @@ namespace itk
  * \wiki
  * \wikiexample{SimpleOperations/TranslationTransform,Translate an image}
  * \wikiexample{ImageProcessing/Upsampling,Upsampling an image}
- * \wikiexample{ImageProcessing/AdjointOrientedGaussianInterpolateImageFilter,Resample (stretch or compress) an image}
+ * \wikiexample{ImageProcessing/OrientedGaussianInterpolateImageFilter,Resample (stretch or compress) an image}
  * \endwiki
  */
 template< typename TInputImage,
           typename TOutputImage,
           typename TInterpolatorPrecisionType = double,
           typename TTransformPrecisionType = TInterpolatorPrecisionType>
-class AdjointOrientedGaussianInterpolateImageFilter :
+class OrientedGaussianInterpolateImageFilter :
   public ImageToImageFilter< TInputImage, TOutputImage >
 {
 public:
   /** Standard class typedefs. */
-  typedef AdjointOrientedGaussianInterpolateImageFilter   Self;
+  typedef OrientedGaussianInterpolateImageFilter          Self;
   typedef ImageToImageFilter< TInputImage, TOutputImage > Superclass;
   typedef SmartPointer< Self >                            Pointer;
   typedef SmartPointer< const Self >                      ConstPointer;
@@ -108,7 +108,7 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(AdjointOrientedGaussianInterpolateImageFilter, ImageToImageFilter);
+  itkTypeMacro(OrientedGaussianInterpolateImageFilter, ImageToImageFilter);
 
   /** Number of dimensions. */
   itkStaticConstMacro(ImageDimension, unsigned int,
@@ -353,15 +353,15 @@ public:
   itkGetConstMacro( Alpha, RealType );
 
 
-  /** AdjointOrientedGaussianInterpolateImageFilter produces an image which is a different size
+  /** OrientedGaussianInterpolateImageFilter produces an image which is a different size
    * than its input.  As such, it needs to provide an implementation
    * for GenerateOutputInformation() in order to inform the pipeline
    * execution model.  The original documentation of this method is
    * below. \sa ProcessObject::GenerateOutputInformaton() */
   virtual void GenerateOutputInformation() ITK_OVERRIDE;
 
-  /** AdjointOrientedGaussianInterpolateImageFilter needs a different input requested region than
-   * the output requested region.  As such, AdjointOrientedGaussianInterpolateImageFilter needs
+  /** OrientedGaussianInterpolateImageFilter needs a different input requested region than
+   * the output requested region.  As such, OrientedGaussianInterpolateImageFilter needs
    * to provide an implementation for GenerateInputRequestedRegion()
    * in order to inform the pipeline execution model.
    * \sa ProcessObject::GenerateInputRequestedRegion() */
@@ -373,7 +373,7 @@ public:
 
   /** This method is used to set the state of the filter after
    * multi-threading. */
-  virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
+  // virtual void AfterThreadedGenerateData() ITK_OVERRIDE;
 
   /** Method Compute the Modified Time based on changed to the components. */
   ModifiedTimeType GetMTime(void) const ITK_OVERRIDE;
@@ -386,8 +386,8 @@ public:
 #endif
 
 protected:
-  AdjointOrientedGaussianInterpolateImageFilter();
-  ~AdjointOrientedGaussianInterpolateImageFilter() {
+  OrientedGaussianInterpolateImageFilter();
+  ~OrientedGaussianInterpolateImageFilter() {
   }
   void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
@@ -405,7 +405,7 @@ protected:
    */
   // virtual void VerifyInputInformation() ITK_OVERRIDE { }
 
-  /** AdjointOrientedGaussianInterpolateImageFilter can be implemented as a multithreaded filter.
+  /** OrientedGaussianInterpolateImageFilter can be implemented as a multithreaded filter.
    * Therefore, this implementation provides a ThreadedGenerateData()
    * routine which is called for each processing thread. The output
    * image data is allocated automatically by the superclass prior
@@ -416,7 +416,7 @@ protected:
    *     ImageToImageFilter::GenerateData() */
   // virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                                     // ThreadIdType threadId) ITK_OVERRIDE;
-  virtual void GenerateData() ITK_OVERRIDE;
+  // virtual void GenerateData() ITK_OVERRIDE;
 
 
   /** ResampleImageFilter can be implemented as a multithreaded filter.
@@ -428,8 +428,8 @@ protected:
    * specified by the parameter "outputRegionForThread"
    * \sa ImageToImageFilter::ThreadedGenerateData(),
    *     ImageToImageFilter::GenerateData() */
-  virtual void ThreadedGenerateData(const InputImageRegionType & inputRegionForThread,
-                                    ThreadIdType threadId);
+  virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
+                                    ThreadIdType threadId) ITK_OVERRIDE;
 
   // /** Default implementation for resampling that works for any
   //  * transformation type. */
@@ -452,17 +452,17 @@ protected:
   /** Static function used as a "callback" by the MultiThreader.  The threading
    * library will call this routine for each thread, which will delegate the
    * control to ThreadedGenerateData(). */
-  static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg);
+  // static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg);
 
   /** Internal structure used for passing image data into the threading library
     */
-  struct ThreadStruct {
-    Pointer Filter;
-    Pointer FilterFoo; //Used to split input image region
-  };
+  // struct ThreadStruct {
+  //   Pointer Filter;
+  //   Pointer FilterFoo; //Used to split input image region
+  // };
 
 private:
-  AdjointOrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;
+  OrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;
   void operator=(const Self &) ITK_DELETE_FUNCTION;
 
   SizeType                m_Size;         // Size of the output image
@@ -487,13 +487,12 @@ private:
   ArrayType                                 m_BoundingBoxStart;
   ArrayType                                 m_BoundingBoxEnd;
   ArrayType                                 m_CutoffDistance;
-  std::vector< OutputImagePointer>          m_OutputPtrThread;
 
 };
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-#include "itkAdjointOrientedGaussianInterpolateImageFilter.hxx"
+#include "itkOrientedGaussianInterpolateImageFilter.hxx"
 #endif
 
 #endif

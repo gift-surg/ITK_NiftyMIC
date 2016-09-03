@@ -110,8 +110,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   dw.Fill( 0.0 );
 
   // Loop over the voxels in the region identified
-  // ME: First, compute region which is to be considered, i.e. have non-zero Gaussian weights
-  // ? ME: Is this a rectangular bounding box?
+  // ME: First, compute rectangular region which is to be considered, i.e. have non-zero Gaussian weights
   ImageRegion<ImageDimension> region;
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {

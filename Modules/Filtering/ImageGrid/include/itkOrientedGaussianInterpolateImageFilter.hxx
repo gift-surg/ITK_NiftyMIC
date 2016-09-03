@@ -15,10 +15,10 @@
  *  limitations under the License.
  *
  *=========================================================================*/
-#ifndef itkAdjointOrientedGaussianInterpolateImageFilter_hxx
-#define itkAdjointOrientedGaussianInterpolateImageFilter_hxx
+#ifndef itkOrientedGaussianInterpolateImageFilter_hxx
+#define itkOrientedGaussianInterpolateImageFilter_hxx
 
-#include "itkAdjointOrientedGaussianInterpolateImageFilter.h"
+#include "itkOrientedGaussianInterpolateImageFilter.h"
 #include "itkObjectFactory.h"
 #include "itkIdentityTransform.h"
 #include "itkProgressReporter.h"
@@ -38,8 +38,8 @@ template< typename TInputImage,
           typename TOutputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-::AdjointOrientedGaussianInterpolateImageFilter()
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+::OrientedGaussianInterpolateImageFilter()
 {
   this->m_OutputOrigin.Fill(0.0);
   this->m_OutputSpacing.Fill(1.0);
@@ -91,7 +91,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::PrintSelf(std::ostream & os, Indent indent) const
 {
   Superclass::PrintSelf(os, indent);
@@ -117,17 +117,17 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::ComputeBoundingBox()
 {
-  if( !this->GetOutput() )
+  if( !this->GetInput() )
     {
     return;
     }
 
-  typename OutputImageType::ConstPointer output = this->GetOutput();
-  typename OutputImageType::SpacingType spacing = output->GetSpacing();
-  typename OutputImageRegionType::SizeType size = output->GetBufferedRegion().GetSize();
+  typename InputImageType::ConstPointer input = this->GetInput();
+  typename InputImageType::SpacingType spacing = input->GetSpacing();
+  typename InputImageRegionType::SizeType size = input->GetBufferedRegion().GetSize();
 
   // std::cout << "spacing = " << spacing << std::endl;
   // std::cout << "size = " << size << std::endl;
@@ -148,7 +148,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::SetOutputSpacing(const double *spacing)
 {
   SpacingType s;
@@ -167,7 +167,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::SetOutputOrigin(const double *origin)
 {
   OriginPointType p(origin);
@@ -181,7 +181,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::SetOutputParametersFromImage(const ImageBaseType *image)
 {
   this->SetOutputOrigin ( image->GetOrigin() );
@@ -198,9 +198,9 @@ template< typename TInputImage,
           typename TOutputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
-typename AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+typename OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::PixelType
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::CastPixelWithBoundsChecking(const InterpolatorOutputType value,
                               const ComponentType minComponent,
                               const ComponentType maxComponent ) const
@@ -236,74 +236,74 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 /**
  * GenerateData
  */
-template< typename TInputImage,
-          typename TOutputImage,
-          typename TInterpolatorPrecisionType,
-          typename TTransformPrecisionType >
-void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-::GenerateData()
-{
-  // Call a method that can be overriden by a subclass to allocate
-  // memory for the filter's outputs
-  this->AllocateOutputs();
+// template< typename TInputImage,
+//           typename TOutputImage,
+//           typename TInterpolatorPrecisionType,
+//           typename TTransformPrecisionType >
+// void
+// OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+// ::GenerateData()
+// {
+//   // Call a method that can be overriden by a subclass to allocate
+//   // memory for the filter's outputs
+//   this->AllocateOutputs();
 
-  // Call a method that can be overridden by a subclass to perform
-  // some calculations prior to splitting the main computations into
-  // separate threads
-  this->BeforeThreadedGenerateData();
+//   // Call a method that can be overridden by a subclass to perform
+//   // some calculations prior to splitting the main computations into
+//   // separate threads
+//   this->BeforeThreadedGenerateData();
 
-  // Compute bounding box for Gaussian exponential
-  this->ComputeBoundingBox();
+//   // Compute bounding box for Gaussian exponential
+//   this->ComputeBoundingBox();
 
-  // Set up the multithreaded processing
-  ThreadStruct str;
+//   // Set up the multithreaded processing
+//   ThreadStruct str;
 
-  // Get the output pointer
-  typename OutputImageType::Pointer outputPtr = this->GetOutput();
+//   // Get the output pointer
+//   typename OutputImageType::Pointer outputPtr = this->GetOutput();
 
-  // Initialize output
-  outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+//   // Initialize output
+//   outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
 
-  // Create additional filter with swaped input and output
-  // Necessary for split input image region in this->ThreaderCallback
-  Pointer foo = AdjointOrientedGaussianInterpolateImageFilter<TOutputImage,TInputImage>::New();
-  foo->SetInput(this->GetOutput());
-  foo->SetOutputParametersFromImage(this->GetInput()); //seems not to be necessary
-  foo->GetOutput()->SetRequestedRegion(this->GetInput()->GetLargestPossibleRegion()); //necessary for SplitRequestedRegion
+//   // Create additional filter with swaped input and output
+//   // Necessary for split input image region in this->ThreaderCallback
+//   Pointer foo = OrientedGaussianInterpolateImageFilter<TOutputImage,TInputImage>::New();
+//   foo->SetInput(this->GetOutput());
+//   foo->SetOutputParametersFromImage(this->GetInput()); //seems not to be necessary
+//   foo->GetOutput()->SetRequestedRegion(this->GetInput()->GetLargestPossibleRegion()); //necessary for SplitRequestedRegion
 
-  str.FilterFoo = foo; // To split input image region in this->ThreaderCallback
-  str.Filter = this;
+//   str.FilterFoo = foo; // To split input image region in this->ThreaderCallback
+//   str.Filter = this;
 
-  // Get the input pointer and prepare multithreader
-  typename InputImageType::ConstPointer inputPtr = this->GetInput();
+//   // Get the input pointer and prepare multithreader
+//   typename InputImageType::ConstPointer inputPtr = this->GetInput();
 
-  const ImageRegionSplitterBase * splitter = this->GetImageRegionSplitter();
-  const unsigned int validThreads = splitter->GetNumberOfSplits( inputPtr->GetRequestedRegion(), this->GetNumberOfThreads() );
+//   const ImageRegionSplitterBase * splitter = this->GetImageRegionSplitter();
+//   const unsigned int validThreads = splitter->GetNumberOfSplits( inputPtr->GetRequestedRegion(), this->GetNumberOfThreads() );
 
-  this->GetMultiThreader()->SetNumberOfThreads( validThreads );
-  this->GetMultiThreader()->SetSingleMethod(this->ThreaderCallback, &str);
+//   this->GetMultiThreader()->SetNumberOfThreads( validThreads );
+//   this->GetMultiThreader()->SetSingleMethod(this->ThreaderCallback, &str);
 
-  // Create valid threads amount of output images for threads working independently
-  m_OutputPtrThread = std::vector< OutputImagePointer>(validThreads);
+//   // Create valid threads amount of output images for threads working independently
+//   m_OutputPtrThread = std::vector< OutputImagePointer>(validThreads);
 
-  for (int i = 0; i < validThreads; ++i)
-  {
-      m_OutputPtrThread[i] = OutputImageType::New();
-      m_OutputPtrThread[i]->CopyInformation(outputPtr);
-      m_OutputPtrThread[i]->SetBufferedRegion( outputPtr->GetRequestedRegion() );
-      m_OutputPtrThread[i]->Allocate();
-      m_OutputPtrThread[i]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
-  }
+//   for (int i = 0; i < validThreads; ++i)
+//   {
+//       m_OutputPtrThread[i] = OutputImageType::New();
+//       m_OutputPtrThread[i]->CopyInformation(outputPtr);
+//       m_OutputPtrThread[i]->SetBufferedRegion( outputPtr->GetRequestedRegion() );
+//       m_OutputPtrThread[i]->Allocate();
+//       m_OutputPtrThread[i]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+//   }
 
-  // multithread the execution
-  this->GetMultiThreader()->SingleMethodExecute();
+//   // multithread the execution
+//   this->GetMultiThreader()->SingleMethodExecute();
 
-  // Call a method that can be overridden by a subclass to perform
-  // some calculations after all the threads have completed
-  this->AfterThreadedGenerateData();
+//   // Call a method that can be overridden by a subclass to perform
+//   // some calculations after all the threads have completed
+//   this->AfterThreadedGenerateData();
 
-}
+// }
 
 
 /**
@@ -314,125 +314,14 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::BeforeThreadedGenerateData()
 {
+  this->ComputeBoundingBox();
 
-}
-
-// Callback routine used by the threading library. This routine just calls
-// the ThreadedGenerateData method after setting the correct region for this
-// thread.
-template< typename TInputImage,
-          typename TOutputImage,
-          typename TInterpolatorPrecisionType,
-          typename TTransformPrecisionType >
-ITK_THREAD_RETURN_TYPE
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-::ThreaderCallback(void *arg)
-{
-  ThreadStruct *str;
-  ThreadIdType  total, threadId, threadCount;
-
-  threadId = ( (MultiThreader::ThreadInfoStruct *)( arg ) )->ThreadID;
-  threadCount = ( (MultiThreader::ThreadInfoStruct *)( arg ) )->NumberOfThreads;
-
-  str = (ThreadStruct *)( ( (MultiThreader::ThreadInfoStruct *)( arg ) )->UserData );
-
-  // execute the actual method with appropriate input region
-  // first find out how many pieces extent can be split into.
-  typename TInputImage::RegionType splitRegion;
-  total = str->FilterFoo->SplitRequestedRegion(threadId, threadCount,
-                                            splitRegion);
-
-  if ( threadId < total )
-    {
-    str->Filter->ThreadedGenerateData(splitRegion, threadId);
-    }
-  // else
-  //   {
-  //   otherwise don't use this thread. Sometimes the threads dont
-  //   break up very well and it is just as efficient to leave a
-  //   few threads idle.
-  //   }
-
-  return ITK_THREAD_RETURN_VALUE;
-}
-
-
-/**
- * Set up state of filter after multi-threading.
- */
-template< typename TInputImage,
-          typename TOutputImage,
-          typename TInterpolatorPrecisionType,
-          typename TTransformPrecisionType >
-void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-::AfterThreadedGenerateData()
-{
-
-  // Get the output pointer
-  typename OutputImageType::Pointer outputPtr = this->GetOutput();
-
-  // Get number of valid threads
-  const unsigned int validThreads = this->GetMultiThreader()->GetNumberOfThreads();
-
-  // std::cout << "validThreads = " << validThreads << std::endl;
-
-  // Get output region iterator
-  typedef ImageRegionIteratorWithIndex<TOutputImage> OutputIterator;
-
-  // Sum output images computed by each thread
-  if ( validThreads > 1 )
-  {
-    typedef itk::AddImageFilter<TOutputImage,TOutputImage,TOutputImage> AddImageFilterType;
-    typename AddImageFilterType::Pointer adder = AddImageFilterType::New();
-
-    // adder->InPlaceOn(); // With this line I get random results for unitTests: 2D Cross!?
-    adder->SetInput1(this->m_OutputPtrThread[0]);
-
-    for (int i = 1; i < validThreads; ++i)
-    {
-      adder->SetInput2(this->m_OutputPtrThread[i]);
-      adder->Update();
-
-      adder->SetInput1(adder->GetOutput());
-    }
-    adder->Update();
-
-    // Update output image data according to summed up image
-    OutputIterator adderOutIt( adder->GetOutput(), outputPtr->GetBufferedRegion() );
-
-    OutputIterator outIt( outputPtr, outputPtr->GetBufferedRegion() );
-
-    outIt.GoToBegin();
-    adderOutIt.GoToBegin();
-
-    while( !outIt.IsAtEnd() )
-    {
-      outIt.Set( adderOutIt.Get() );
-      ++outIt;
-      ++adderOutIt;
-    }
-  }
-  // only one thread; i.e. set output equal to the result of the one thread
-  else
-  {
-    OutputIterator adderOutIt( this->m_OutputPtrThread[0], outputPtr->GetBufferedRegion() );
-    OutputIterator outIt( outputPtr, outputPtr->GetBufferedRegion() );
-
-    outIt.GoToBegin();
-    adderOutIt.GoToBegin();
-
-    while( !outIt.IsAtEnd() )
-    {
-      outIt.Set( adderOutIt.Get() );
-      ++outIt;
-      ++adderOutIt;
-    }
-  }
-
+  // std::cout << "m_BoundingBoxStart = " << this->m_BoundingBoxStart << std::endl;
+  // std::cout << "m_BoundingBoxEnd = " << this->m_BoundingBoxEnd << std::endl;
+  // std::cout << "m_CutoffDistance = " << this->m_CutoffDistance << std::endl;
 }
 
 
@@ -444,13 +333,13 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-::ThreadedGenerateData(const InputImageRegionType & inputRegionForThread,
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+::ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                        ThreadIdType threadId)
 {
 
   // Get the output pointer
-  typename OutputImageType::Pointer outputPtr = this->m_OutputPtrThread[threadId];
+  typename OutputImageType::Pointer outputPtr = this->GetOutput();
 
   // Get the input pointer
   typename InputImageType::ConstPointer inputPtr = this->GetInput();
@@ -459,8 +348,8 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   typename TransformType::ConstPointer transformPtr = this->GetTransform();
 
   // Create an iterator that will walk the input region for this thread.
-  typedef ImageRegionConstIteratorWithIndex< TInputImage > InputIterator;
-  InputIterator inIt(inputPtr, inputRegionForThread);
+  typedef ImageRegionIteratorWithIndex< TOutputImage > OutputIterator;
+  OutputIterator outIt(outputPtr, outputRegionForThread);
 
   // Define a few indices that will be used to translate from an input pixel
   // to an output pixel
@@ -480,8 +369,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   // Support for progress methods/callbacks
   ProgressReporter progress( this,
                              threadId,
-                             inputRegionForThread.GetNumberOfPixels() );
-
+                             outputRegionForThread.GetNumberOfPixels() );
 
   // Min/max values of the output pixel type AND these values
   // represented as the output type of the interpolator
@@ -492,7 +380,7 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
 
   // ME: Compute scaled oriented PSF for voxel space
   // Scaling matrix
-  const typename OutputImageType::SpacingType spacing = outputPtr->GetSpacing();
+  const typename InputImageType::SpacingType spacing = inputPtr->GetSpacing();
   itk::Matrix<double,ImageDimension,ImageDimension> S;
   S.Fill(0.0);
   for (int d = 0; d < ImageDimension; ++d)
@@ -518,76 +406,72 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
   // std::cout << "m_BoundingBoxEnd = " << m_BoundingBoxEnd << std::endl;
 
   // Get region to check whether obtained index lies within
-  OutputImageRegionType entireOutputRegion = outputPtr->GetBufferedRegion();
+  InputImageRegionType entireInputRegion = inputPtr->GetBufferedRegion();
 
   // Walk the input region
-  inIt.GoToBegin();
+  outIt.GoToBegin();
 
-  while ( !inIt.IsAtEnd() )
+  while ( !outIt.IsAtEnd() )
     {
+      RealType w = 0.0;
+      RealType sum_m = 0.0;
+      RealType sum_me = 0.0;
 
       // Determine the position of the first pixel in the scanline
-      inputIndex = inIt.GetIndex();
-      inputPtr->TransformIndexToPhysicalPoint(inputIndex, inputPoint);
+      outputIndex = outIt.GetIndex();
+      outputPtr->TransformIndexToPhysicalPoint(outputIndex, outputPoint);
 
-      // Compute corresponding output pixel position
-      outputPoint = transformPtr->TransformPoint(inputPoint);
-      outputPtr->TransformPhysicalPointToContinuousIndex(outputPoint, outputCIndex);
+      // Compute corresponding input pixel position
+      inputPoint = transformPtr->TransformPoint(outputPoint);
+      inputPtr->TransformPhysicalPointToContinuousIndex(inputPoint, inputCIndex);
 
-      // Check that index is within output region
-      if ( entireOutputRegion.IsInside(outputCIndex) ){
+      // Check that index is within input region
+      if ( entireInputRegion.IsInside(inputCIndex) ){
 
         // Loop over the voxels in the region identified
-        OutputImageRegionType outputRegion;
+        InputImageRegionType inputRegion;
         for( unsigned int d = 0; d < ImageDimension; d++ )
           {
           int boundingBoxSize = static_cast<int>(
             this->m_BoundingBoxEnd[d] - this->m_BoundingBoxStart[d] + 0.5 );  // = size[d]
-          int begin = vnl_math_max( 0, static_cast<int>( std::floor( outputCIndex[d] -
+          int begin = vnl_math_max( 0, static_cast<int>( std::floor( inputCIndex[d] -
             this->m_BoundingBoxStart[d] - this->m_CutoffDistance[d] ) ) );
           int end = vnl_math_min( boundingBoxSize, static_cast<int>( std::ceil(
-            outputCIndex[d] - this->m_BoundingBoxStart[d] + this->m_CutoffDistance[d] ) ) );
+            inputCIndex[d] - this->m_BoundingBoxStart[d] + this->m_CutoffDistance[d] ) ) );
 
-          outputRegion.SetIndex( d, begin );
-          outputRegion.SetSize( d, end - begin );
+          inputRegion.SetIndex( d, begin );
+          inputRegion.SetSize( d, end - begin );
 
           // std::cout << "begin = " << begin << ", end = " << end << std::endl;
           // std::cout << "boundingBoxSize = " << boundingBoxSize << std::endl;
           }
 
-        // std::cout << "outputRegion = " << outputRegion << std::endl;
+        // std::cout << "inputRegion = " << inputRegion << std::endl;
 
         // ME: Define iterator over chosen region
-        ImageRegionIteratorWithIndex<OutputImageType> outIt( outputPtr, outputRegion );
+        ImageRegionConstIteratorWithIndex<InputImageType> inIt( inputPtr, inputRegion );
 
-        RealType w = 0.0;
-        RealType sum_m = 0.0;
-
-
-        for( outIt.GoToBegin(); !outIt.IsAtEnd(); ++outIt )
+        // ME: For each voxel of that region do
+        for( inIt.GoToBegin(); !inIt.IsAtEnd(); ++inIt )
           {
-            w = this->ComputeExponentialFunction(outIt.GetIndex(), outputCIndex, CovScaledInv);
-            sum_m += w;
-          }
+          typename InputImageType::IndexType index = inIt.GetIndex();
+          // std::cout << index;
 
-        for( outIt.GoToBegin(); !outIt.IsAtEnd(); ++outIt )
-          {
-            w = this->ComputeExponentialFunction(outIt.GetIndex(), outputCIndex, CovScaledInv);
-            value = outIt.Get() + inIt.Get()*w/sum_m;
-            // pixval = this->CastPixelWithBoundsChecking( value, minOutputValue, maxOutputValue );
-            // std::cout << "weight = " << w << std::endl;
-            // std::cout << "weight_sum = " << sum_m << std::endl;
-            // std::cout << "inIt.Get() = " << inIt.Get() << std::endl;
-            // std::cout << "value = Get() + inIt.Get()*w/sum_m  = " << value << std::endl;
-            // std::cout << "value = outIt.Get() + inIt.Get()*w/sum_m  = " << outIt.Get() << " + " << inIt.Get() << "*" << w << "/" << sum_m << " = " << value << std::endl;
-            outIt.Set(value);
+          w = this->ComputeExponentialFunction(index, inputCIndex, CovScaledInv);
+          RealType V = inIt.Get();  // ME: Intensity of current voxel
+          sum_me += V * w;        // ME: Add Gaussian weighted intensity
+          sum_m += w;             // ME: Record weight sum for subsequent normalization
           }
+        RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
+
+        outIt.Set(rc);
+
       }
-      // else{
-      //   outIt.Set( this->m_DefaultPixelValue );
-      // }
+      else{
+        outIt.Set( this->m_DefaultPixelValue );
+      }
       progress.CompletedPixel();
-      ++inIt;
+      ++outIt;
     }
 
   // // DEBUGGING OUTPUT
@@ -609,9 +493,9 @@ template< typename TInputImage,
           typename TOutputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
-typename AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+typename OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::RealType
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::ComputeExponentialFunction(
   IndexType point,
   ContinuousOutputIndexType center,
@@ -652,7 +536,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::GenerateInputRequestedRegion()
 {
   // call the superclass's implementation of this method
@@ -679,7 +563,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 void
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::GenerateOutputInformation()
 {
   // call the superclass' implementation of this method
@@ -731,7 +615,7 @@ template< typename TInputImage,
           typename TInterpolatorPrecisionType,
           typename TTransformPrecisionType >
 ModifiedTimeType
-AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
+OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
 ::GetMTime(void) const
 {
   ModifiedTimeType latestTime = Object::GetMTime();
