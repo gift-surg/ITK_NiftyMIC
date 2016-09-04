@@ -563,7 +563,6 @@ AdjointOrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInter
         RealType w = 0.0;
         RealType sum_m = 0.0;
 
-
         for( outIt.GoToBegin(); !outIt.IsAtEnd(); ++outIt )
           {
             w = this->ComputeExponentialFunction(outIt.GetIndex(), outputCIndex, CovScaledInv);

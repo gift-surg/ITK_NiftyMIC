@@ -270,11 +270,19 @@ public:
   /** Get the reference image that is defining the output information. */
   itkGetInputMacro(ReferenceImage, ReferenceImageBaseType);
 
+  typedef std::vector<OutputImagePointer> JacobianBaseType;
+
+  itkGetMacro(Jacobian, JacobianBaseType);
+
   /** Turn on/off whether a specified reference image should be used to define
    *  the output information. */
   itkSetMacro(UseReferenceImage, bool);
   itkBooleanMacro(UseReferenceImage);
   itkGetConstMacro(UseReferenceImage, bool);
+
+  itkSetMacro(UseJacobian, bool);
+  itkBooleanMacro(UseJacobian);
+  itkGetConstMacro(UseJacobian, bool);
 
 
   /**
@@ -479,7 +487,6 @@ private:
   IndexType       m_OutputStartIndex;     // output image start index
   bool            m_UseReferenceImage;
 
-
   SquareArrayType                           m_Covariance;
   ArrayType                                 m_Sigma;
   RealType                                  m_Alpha;
@@ -487,6 +494,9 @@ private:
   ArrayType                                 m_BoundingBoxStart;
   ArrayType                                 m_BoundingBoxEnd;
   ArrayType                                 m_CutoffDistance;
+
+  bool                                      m_UseJacobian;
+  JacobianBaseType                          m_Jacobian;
 
 };
 } // end namespace itk

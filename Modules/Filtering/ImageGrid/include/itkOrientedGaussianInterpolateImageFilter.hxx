@@ -79,6 +79,8 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
     {
     this->m_Covariance[d*ImageDimension + d] = 1.0;
     }
+
+  this->m_UseJacobian = false;
 }
 
 /**
@@ -319,6 +321,22 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 {
   this->ComputeBoundingBox();
 
+  if ( this->m_UseJacobian )
+  {
+
+    typename OutputImageType::Pointer outputPtr = this->GetOutput();
+
+    m_Jacobian = JacobianBaseType(ImageDimension);
+
+    for( unsigned int d = 0; d < ImageDimension; d++ ){
+      m_Jacobian[d] = OutputImageType::New();
+      m_Jacobian[d]->CopyInformation(outputPtr);
+      m_Jacobian[d]->SetBufferedRegion( outputPtr->GetBufferedRegion() );
+      m_Jacobian[d]->Allocate();
+      m_Jacobian[d]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+    }
+  }
+
   // std::cout << "m_BoundingBoxStart = " << this->m_BoundingBoxStart << std::endl;
   // std::cout << "m_BoundingBoxEnd = " << this->m_BoundingBoxEnd << std::endl;
   // std::cout << "m_CutoffDistance = " << this->m_CutoffDistance << std::endl;
@@ -399,11 +417,36 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
     }
   }
 
-  itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv = S * covariance.GetInverse() * S;
-  // std::cout << "CovScaledInv = \n" << CovScaledInv << std::endl;
+  vnl_matrix_fixed<double, ImageDimension, ImageDimension> InvCov = covariance.GetInverse();
+  itk::Matrix<double, ImageDimension, ImageDimension> InvCovScaled = S * InvCov * S;
+  // std::cout << "InvCovScaled = \n" << InvCovScaled << std::endl;
   // std::cout << "m_CutoffDistance = " << m_CutoffDistance << std::endl;
   // std::cout << "m_BoundingBoxStart = " << m_BoundingBoxStart << std::endl;
   // std::cout << "m_BoundingBoxEnd = " << m_BoundingBoxEnd << std::endl;
+
+  IndexType c;
+
+  // if ( this->m_UseJacobian ){
+  //   origin.Fill(0.0);
+  //   double DetCov = 0.0;
+  //   regionJacobian = std::vector<OutputImageRegionType>(ImageDimension);
+
+  //   for( unsigned int d = 0; d < ImageDimension; d++ ){
+  //     regionJacobian[d] = m_Jacobian[d]->GetRequestedRegion();
+  //   }
+
+  //   if ( ImageDimension == 2 ){
+  //     DetCov = covariance(0,0)*covariance(1,1) - covariance(0,1)*covariance(0,1);
+  //     norm_factor = 1/std::sqrt(DetCov*4*vnl_math::pi*vnl_math::pi);
+  //   }
+  //   // ImageDimension == 3
+  //   else {
+  //     DetCov =  covariance(0,0)*(covariance(1,1)*covariance(2,2) - covariance(1,2)*covariance(1,2)) +
+  //       covariance(0,1)*(covariance(0,2)*covariance(1,2) - covariance(0,1)*covariance(2,2)) +
+  //       covariance(0,2)*(covariance(0,1)*covariance(1,2) - covariance(1,1)*covariance(0,2));
+  //     norm_factor = 1/std::sqrt(DetCov*8*vnl_math::pi*vnl_math::pi*vnl_math::pi);
+  //   }
+  // }
 
   // Get region to check whether obtained index lies within
   InputImageRegionType entireInputRegion = inputPtr->GetBufferedRegion();
@@ -414,8 +457,14 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
   while ( !outIt.IsAtEnd() )
     {
       RealType w = 0.0;
+      RealType dw = 0.0;
+
       RealType sum_m = 0.0;
       RealType sum_me = 0.0;
+
+      ArrayType dsum_me;
+      dsum_me.Fill( 0.0 );
+
 
       // Determine the position of the first pixel in the scanline
       outputIndex = outIt.GetIndex();
@@ -452,19 +501,39 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
         ImageRegionConstIteratorWithIndex<InputImageType> inIt( inputPtr, inputRegion );
 
         // ME: For each voxel of that region do
-        for( inIt.GoToBegin(); !inIt.IsAtEnd(); ++inIt )
-          {
+        for( inIt.GoToBegin(); !inIt.IsAtEnd(); ++inIt ) {
+
           typename InputImageType::IndexType index = inIt.GetIndex();
           // std::cout << index;
 
-          w = this->ComputeExponentialFunction(index, inputCIndex, CovScaledInv);
+          w = this->ComputeExponentialFunction(index, inputCIndex, InvCovScaled);
           RealType V = inIt.Get();  // ME: Intensity of current voxel
           sum_me += V * w;        // ME: Add Gaussian weighted intensity
           sum_m += w;             // ME: Record weight sum for subsequent normalization
+
+
+          if ( this->m_UseJacobian ){
+
+            for ( unsigned int d = 0; d < ImageDimension; ++d) {
+              ImageRegionIteratorWithIndex<OutputImageType> it( m_Jacobian[d], outputRegionForThread );
+              double tmp = 0.0;
+
+              for ( unsigned int q = 0; q < ImageDimension; ++q) {
+                tmp += (index[q] - inputCIndex[q])*InvCov[q][d];
+              }
+
+              dw = -w * tmp;
+              it.SetIndex(outputIndex);
+              it.Set(w*tmp);
+            }
+
+
           }
+        }
         RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
 
         outIt.Set(rc);
+
 
       }
       else{
@@ -499,7 +568,7 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 ::ComputeExponentialFunction(
   IndexType point,
   ContinuousOutputIndexType center,
-  itk::Matrix<double, ImageDimension, ImageDimension> CovScaledInv ) const
+  itk::Matrix<double, ImageDimension, ImageDimension> InvCovScaled ) const
 {
   itk::Vector<double, ImageDimension> tmp;
   itk::Vector<double, ImageDimension> diff;
@@ -512,7 +581,7 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
   }
 
 
-  tmp = CovScaledInv*diff;
+  tmp = InvCovScaled*diff;
   result = diff*tmp;
 
   // std::cout << "Sigma*(point-center) = " << tmp << std::endl;
