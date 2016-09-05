@@ -236,79 +236,6 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
 
 /**
- * GenerateData
- */
-// template< typename TInputImage,
-//           typename TOutputImage,
-//           typename TInterpolatorPrecisionType,
-//           typename TTransformPrecisionType >
-// void
-// OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolatorPrecisionType, TTransformPrecisionType >
-// ::GenerateData()
-// {
-//   // Call a method that can be overriden by a subclass to allocate
-//   // memory for the filter's outputs
-//   this->AllocateOutputs();
-
-//   // Call a method that can be overridden by a subclass to perform
-//   // some calculations prior to splitting the main computations into
-//   // separate threads
-//   this->BeforeThreadedGenerateData();
-
-//   // Compute bounding box for Gaussian exponential
-//   this->ComputeBoundingBox();
-
-//   // Set up the multithreaded processing
-//   ThreadStruct str;
-
-//   // Get the output pointer
-//   typename OutputImageType::Pointer outputPtr = this->GetOutput();
-
-//   // Initialize output
-//   outputPtr->FillBuffer( itk::NumericTraits< PixelType >::Zero );
-
-//   // Create additional filter with swaped input and output
-//   // Necessary for split input image region in this->ThreaderCallback
-//   Pointer foo = OrientedGaussianInterpolateImageFilter<TOutputImage,TInputImage>::New();
-//   foo->SetInput(this->GetOutput());
-//   foo->SetOutputParametersFromImage(this->GetInput()); //seems not to be necessary
-//   foo->GetOutput()->SetRequestedRegion(this->GetInput()->GetLargestPossibleRegion()); //necessary for SplitRequestedRegion
-
-//   str.FilterFoo = foo; // To split input image region in this->ThreaderCallback
-//   str.Filter = this;
-
-//   // Get the input pointer and prepare multithreader
-//   typename InputImageType::ConstPointer inputPtr = this->GetInput();
-
-//   const ImageRegionSplitterBase * splitter = this->GetImageRegionSplitter();
-//   const unsigned int validThreads = splitter->GetNumberOfSplits( inputPtr->GetRequestedRegion(), this->GetNumberOfThreads() );
-
-//   this->GetMultiThreader()->SetNumberOfThreads( validThreads );
-//   this->GetMultiThreader()->SetSingleMethod(this->ThreaderCallback, &str);
-
-//   // Create valid threads amount of output images for threads working independently
-//   m_OutputPtrThread = std::vector< OutputImagePointer>(validThreads);
-
-//   for (int i = 0; i < validThreads; ++i)
-//   {
-//       m_OutputPtrThread[i] = OutputImageType::New();
-//       m_OutputPtrThread[i]->CopyInformation(outputPtr);
-//       m_OutputPtrThread[i]->SetBufferedRegion( outputPtr->GetRequestedRegion() );
-//       m_OutputPtrThread[i]->Allocate();
-//       m_OutputPtrThread[i]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
-//   }
-
-//   // multithread the execution
-//   this->GetMultiThreader()->SingleMethodExecute();
-
-//   // Call a method that can be overridden by a subclass to perform
-//   // some calculations after all the threads have completed
-//   this->AfterThreadedGenerateData();
-
-// }
-
-
-/**
  * Set up state of filter before multi-threading.
  */
 template< typename TInputImage,
@@ -380,6 +307,8 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
   PixelType pixval;
   OutputType value;
 
+  CovariantVectorType gradient;
+
   // Support for progress methods/callbacks
   ProgressReporter progress( this,
                              threadId,
@@ -420,30 +349,6 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
   // std::cout << "m_BoundingBoxStart = " << m_BoundingBoxStart << std::endl;
   // std::cout << "m_BoundingBoxEnd = " << m_BoundingBoxEnd << std::endl;
 
-  IndexType c;
-
-  // if ( this->m_UseJacobian ){
-  //   origin.Fill(0.0);
-  //   double DetCov = 0.0;
-  //   regionJacobian = std::vector<OutputImageRegionType>(ImageDimension);
-
-  //   for( unsigned int d = 0; d < ImageDimension; d++ ){
-  //     regionJacobian[d] = m_Jacobian[d]->GetRequestedRegion();
-  //   }
-
-  //   if ( ImageDimension == 2 ){
-  //     DetCov = covariance(0,0)*covariance(1,1) - covariance(0,1)*covariance(0,1);
-  //     norm_factor = 1/std::sqrt(DetCov*4*vnl_math::pi*vnl_math::pi);
-  //   }
-  //   // ImageDimension == 3
-  //   else {
-  //     DetCov =  covariance(0,0)*(covariance(1,1)*covariance(2,2) - covariance(1,2)*covariance(1,2)) +
-  //       covariance(0,1)*(covariance(0,2)*covariance(1,2) - covariance(0,1)*covariance(2,2)) +
-  //       covariance(0,2)*(covariance(0,1)*covariance(1,2) - covariance(1,1)*covariance(0,2));
-  //     norm_factor = 1/std::sqrt(DetCov*8*vnl_math::pi*vnl_math::pi*vnl_math::pi);
-  //   }
-  // }
-
   // Get region to check whether obtained index lies within
   InputImageRegionType entireInputRegion = inputPtr->GetBufferedRegion();
 
@@ -460,8 +365,6 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
       ArrayType dsum_me;
       t.Fill( 0.0 );
       dsum_me.Fill( 0.0 );
-      CovariantVectorType gradient;
-
 
       // Determine the position of the first pixel in the scanline
       outputIndex = outIt.GetIndex();
