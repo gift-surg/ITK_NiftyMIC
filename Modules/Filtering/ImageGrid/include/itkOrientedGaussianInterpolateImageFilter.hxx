@@ -451,18 +451,18 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
   // Get region to check whether obtained index lies within
   InputImageRegionType entireInputRegion = inputPtr->GetBufferedRegion();
 
-  // Walk the input region
+  // Walk the output region
   outIt.GoToBegin();
 
   while ( !outIt.IsAtEnd() )
     {
       RealType w = 0.0;
-      RealType dw = 0.0;
-
       RealType sum_m = 0.0;
       RealType sum_me = 0.0;
 
+      ArrayType t;
       ArrayType dsum_me;
+      t.Fill( 0.0 );
       dsum_me.Fill( 0.0 );
 
 
@@ -490,12 +490,7 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
           inputRegion.SetIndex( d, begin );
           inputRegion.SetSize( d, end - begin );
-
-          // std::cout << "begin = " << begin << ", end = " << end << std::endl;
-          // std::cout << "boundingBoxSize = " << boundingBoxSize << std::endl;
           }
-
-        // std::cout << "inputRegion = " << inputRegion << std::endl;
 
         // ME: Define iterator over chosen region
         ImageRegionConstIteratorWithIndex<InputImageType> inIt( inputPtr, inputRegion );
@@ -507,33 +502,38 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
           // std::cout << index;
 
           w = this->ComputeExponentialFunction(index, inputCIndex, InvCovScaled);
-          RealType V = inIt.Get();  // ME: Intensity of current voxel
-          sum_me += V * w;        // ME: Add Gaussian weighted intensity
+          RealType v = inIt.Get() * w;  // ME: Intensity of current voxel
+          sum_me += v;        // ME: Add Gaussian weighted intensity
           sum_m += w;             // ME: Record weight sum for subsequent normalization
 
-
           if ( this->m_UseJacobian ){
-
+            // Compute shift for current voxel iteration
             for ( unsigned int d = 0; d < ImageDimension; ++d) {
-              ImageRegionIteratorWithIndex<OutputImageType> it( m_Jacobian[d], outputRegionForThread );
-              double tmp = 0.0;
-
-              for ( unsigned int q = 0; q < ImageDimension; ++q) {
-                tmp += (index[q] - inputCIndex[q])*InvCov[q][d];
-              }
-
-              dw = -w * tmp;
-              it.SetIndex(outputIndex);
-              it.Set(w*tmp);
+              t[d] = index[d] - inputCIndex[d];
             }
 
-
+            // Compute contribution for Jacobian
+            for ( unsigned int d = 0; d < ImageDimension; ++d) {
+              RealType dv = 0.0;
+              for ( unsigned int q = 0; q < ImageDimension; ++q) {
+                dv += t[q]*InvCov[q][d];
+              }
+              dsum_me[d] += dv*v;
+            }
           }
         }
-        RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
 
-        outIt.Set(rc);
+        // ME: Final Gaussian interpolated voxel intensity
+        outIt.Set(sum_me/sum_m);
 
+        if ( this->m_UseJacobian ){
+          for ( unsigned int d = 0; d < ImageDimension; ++d) {
+            // TODO: Create vector of regions
+            ImageRegionIteratorWithIndex<OutputImageType> it( m_Jacobian[d], outputRegionForThread );
+            it.SetIndex(outputIndex);
+            it.Set(dsum_me[d]/sum_m);
+          }
+        }
 
       }
       else{
