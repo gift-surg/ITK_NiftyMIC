@@ -197,6 +197,10 @@ public:
   /** Square array typedef support */
   typedef FixedArray<double, ImageDimension*ImageDimension> SquareArrayType;
 
+  /** Jacobian, i.e. derivative w.r.t to spatial coordinates */
+  typedef Image< CovariantVector< TInterpolatorPrecisionType, TInputImage::ImageDimension >, TInputImage::ImageDimension > JacobianBaseType;
+  typedef CovariantVector< TInterpolatorPrecisionType, itkGetStaticConstMacro(OutputImageDimension) >  CovariantVectorType;
+
   /** Get/Set the coordinate transformation.
    * Set the coordinate transform to use for resampling.  Note that this must
    * be in physical coordinates and it is the output-to-input transform, NOT
@@ -270,9 +274,8 @@ public:
   /** Get the reference image that is defining the output information. */
   itkGetInputMacro(ReferenceImage, ReferenceImageBaseType);
 
-  typedef std::vector<OutputImagePointer> JacobianBaseType;
-
-  itkGetMacro(Jacobian, JacobianBaseType);
+  /** Get the Jacobian image */
+  itkGetMacro(Jacobian, typename JacobianBaseType::Pointer);
 
   /** Turn on/off whether a specified reference image should be used to define
    *  the output information. */
@@ -496,7 +499,7 @@ private:
   ArrayType                                 m_CutoffDistance;
 
   bool                                      m_UseJacobian;
-  JacobianBaseType                          m_Jacobian;
+  typename JacobianBaseType::Pointer        m_Jacobian;
 
 };
 } // end namespace itk

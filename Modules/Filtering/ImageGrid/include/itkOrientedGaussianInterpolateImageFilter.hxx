@@ -326,15 +326,11 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
     typename OutputImageType::Pointer outputPtr = this->GetOutput();
 
-    m_Jacobian = JacobianBaseType(ImageDimension);
-
-    for( unsigned int d = 0; d < ImageDimension; d++ ){
-      m_Jacobian[d] = OutputImageType::New();
-      m_Jacobian[d]->CopyInformation(outputPtr);
-      m_Jacobian[d]->SetBufferedRegion( outputPtr->GetBufferedRegion() );
-      m_Jacobian[d]->Allocate();
-      m_Jacobian[d]->FillBuffer( itk::NumericTraits< PixelType >::Zero );
-    }
+    m_Jacobian = JacobianBaseType::New();
+    m_Jacobian->CopyInformation(outputPtr);
+    m_Jacobian->SetBufferedRegion( outputPtr->GetBufferedRegion() );
+    m_Jacobian->Allocate();
+    m_Jacobian->FillBuffer( itk::NumericTraits< PixelType >::Zero );
   }
 
   // std::cout << "m_BoundingBoxStart = " << this->m_BoundingBoxStart << std::endl;
@@ -464,6 +460,7 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
       ArrayType dsum_me;
       t.Fill( 0.0 );
       dsum_me.Fill( 0.0 );
+      CovariantVectorType gradient;
 
 
       // Determine the position of the first pixel in the scanline
@@ -511,7 +508,6 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
             for ( unsigned int d = 0; d < ImageDimension; ++d) {
               t[d] = index[d] - inputCIndex[d];
             }
-
             // Compute contribution for Jacobian
             for ( unsigned int d = 0; d < ImageDimension; ++d) {
               RealType dv = 0.0;
@@ -528,11 +524,9 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
         if ( this->m_UseJacobian ){
           for ( unsigned int d = 0; d < ImageDimension; ++d) {
-            // TODO: Create vector of regions
-            ImageRegionIteratorWithIndex<OutputImageType> it( m_Jacobian[d], outputRegionForThread );
-            it.SetIndex(outputIndex);
-            it.Set(dsum_me[d]/sum_m);
+            gradient[d] = dsum_me[d] / sum_m;
           }
+          m_Jacobian->SetPixel(outputIndex, gradient);
         }
 
       }
