@@ -21,6 +21,8 @@
 #include "itkImageToImageFilter.h"
 #include "itkCovariantVector.h"
 #include "itkImageRegionIterator.h"
+#include "itkEuler3DTransform.h"
+#include "itkDataObjectDecorator.h"
 
 namespace itk
 {
