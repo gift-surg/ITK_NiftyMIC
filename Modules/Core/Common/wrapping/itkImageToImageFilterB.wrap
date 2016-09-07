@@ -57,7 +57,7 @@ itk_wrap_class("itk::ImageToImageFilter" POINTER)
                       "itk::Image<${ITKT_F}, ${d}>, itk::Image<itk::CovariantVector<${ITKT_D}, ${d}>, ${d}>")
   endforeach()
   # Used in GradientEuler3DTransformImageFilter
-  itk_wrap_template("I${ITKM_F}3ICV${ITKM_D}183"
-                      "itk::Image<${ITKT_F}, 3>, itk::Image<itk::CovariantVector<${ITKT_D}, 18>, 3>")
+  itk_wrap_template("I${ITKM_D}3ICV${ITKM_D}183"
+                      "itk::Image<${ITKT_D}, 3>, itk::Image<itk::CovariantVector<${ITKT_D}, 18>, 3>")
 
 itk_end_wrap_class()

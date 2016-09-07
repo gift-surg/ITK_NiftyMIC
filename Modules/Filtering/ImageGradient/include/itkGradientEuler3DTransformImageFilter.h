@@ -104,11 +104,13 @@ public:
   /**
    *  Transform typedef.
    */
-  typedef TOutputValueType                          TTransformPrecisionType;
-  typedef Euler3DTransform<TTransformPrecisionType> TransformType;
-  typedef typename TransformType::ConstPointer      TransformPointerType;
-  typedef DataObjectDecorator<TransformType>        DecoratedTransformType;
-  typedef typename DecoratedTransformType::Pointer  DecoratedTransformPointer;
+  typedef TOutputValueType                                  TTransformPrecisionType;
+  typedef Transform< TTransformPrecisionType,
+            itkGetStaticConstMacro(InputImageDimension),
+            itkGetStaticConstMacro(InputImageDimension) >   TransformType;
+  typedef typename TransformType::ConstPointer              TransformPointerType;
+  typedef DataObjectDecorator<TransformType>                DecoratedTransformType;
+  typedef typename DecoratedTransformType::Pointer          DecoratedTransformPointer;
 
   /** Image index typedef. */
   typedef typename OutputImageType::IndexType IndexType;
