@@ -80,7 +80,8 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
     this->m_Covariance[d*ImageDimension + d] = 1.0;
     }
 
-  this->m_UseJacobian = false;
+  this->m_UseJacobian       = false;
+  this->m_UseImageDirection = true;
 }
 
 /**
@@ -344,6 +345,7 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
   vnl_matrix_fixed<double, ImageDimension, ImageDimension> InvCov = covariance.GetInverse();
   itk::Matrix<double, ImageDimension, ImageDimension> InvCovScaled = S * InvCov * S;
+  // std::cout << "InvCov = \n" << InvCov << std::endl;
   // std::cout << "InvCovScaled = \n" << InvCovScaled << std::endl;
   // std::cout << "m_CutoffDistance = " << m_CutoffDistance << std::endl;
   // std::cout << "m_BoundingBoxStart = " << m_BoundingBoxStart << std::endl;
@@ -361,9 +363,8 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
       RealType sum_m = 0.0;
       RealType sum_me = 0.0;
 
-      ArrayType t;
-      ArrayType dsum_me;
-      t.Fill( 0.0 );
+      PointType t;
+      itk::Vector<double, ImageDimension> dsum_me;
       dsum_me.Fill( 0.0 );
 
       // Determine the position of the first pixel in the scanline
@@ -403,21 +404,17 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
           w = this->ComputeExponentialFunction(index, inputCIndex, InvCovScaled);
           RealType v = inIt.Get() * w;  // ME: Intensity of current voxel
-          sum_me += v;        // ME: Add Gaussian weighted intensity
-          sum_m += w;             // ME: Record weight sum for subsequent normalization
+          sum_me += v;                  // ME: Add Gaussian weighted intensity
+          sum_m += w;                   // ME: Record weight sum for subsequent normalization
 
           if ( this->m_UseJacobian ){
             // Compute shift for current voxel iteration
-            for ( unsigned int d = 0; d < ImageDimension; ++d) {
-              t[d] = index[d] - inputCIndex[d];
+            for (unsigned int d = 0; d < ImageDimension; ++d) {
+              t[d] = spacing[d]*(index[d]-inputCIndex[d]);
             }
             // Compute contribution for Jacobian
             for ( unsigned int d = 0; d < ImageDimension; ++d) {
-              RealType dv = 0.0;
-              for ( unsigned int q = 0; q < ImageDimension; ++q) {
-                dv += t[q]*InvCov[q][d];
-              }
-              dsum_me[d] += dv*v;
+              dsum_me[d] += v*t[d];
             }
           }
         }
@@ -427,14 +424,31 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
 
         if ( this->m_UseJacobian ){
           for ( unsigned int d = 0; d < ImageDimension; ++d) {
-            gradient[d] = dsum_me[d] / sum_m;
+            gradient[d] = dsum_me*InvCov[d] / sum_m;
           }
-          m_Jacobian->SetPixel(outputIndex, gradient);
+          // Use image direction information to set gradient
+          if ( this->m_UseImageDirection ){
+            CovariantVectorType gradientImageDirection;
+            outputPtr->TransformLocalVectorToPhysicalVector(gradient, gradientImageDirection);
+            m_Jacobian->SetPixel(outputIndex, gradientImageDirection);
+          }
+          else {
+            m_Jacobian->SetPixel(outputIndex, gradient);
+          }
         }
 
       }
       else{
         outIt.Set( this->m_DefaultPixelValue );
+
+        if ( this->m_UseJacobian ){
+          for ( unsigned int d = 0; d < ImageDimension; ++d) {
+            gradient[d] = 0.0;
+          }
+          m_Jacobian->SetPixel(outputIndex, gradient);
+
+        }
+
       }
       progress.CompletedPixel();
       ++outIt;

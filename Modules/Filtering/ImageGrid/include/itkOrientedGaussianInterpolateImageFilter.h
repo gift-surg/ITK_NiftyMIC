@@ -287,6 +287,20 @@ public:
   itkBooleanMacro(UseJacobian);
   itkGetConstMacro(UseJacobian, bool);
 
+  /** The UseImageDirection flag determines whether image derivatives are
+   * computed with respect to the image grid or with respect to the physical
+   * space. When this flag is ON the derivatives are computed with respect to
+   * the coodinate system of physical space. The difference is whether we take
+   * into account the image Direction or not. The flag ON will take into
+   * account the image direction and will result in an extra matrix
+   * multiplication compared to the amount of computation performed when the
+   * flag is OFF.
+   * The default value of this flag is On.
+   */
+  itkSetMacro(UseImageDirection, bool);
+  itkGetConstMacro(UseImageDirection, bool);
+  itkBooleanMacro(UseImageDirection);
+
 
   /**
    * Set/Get sigma
@@ -425,52 +439,15 @@ protected:
    * specified by the parameter "outputRegionForThread"
    * \sa ImageToImageFilter::ThreadedGenerateData(),
    *     ImageToImageFilter::GenerateData() */
-  // virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
-                                    // ThreadIdType threadId) ITK_OVERRIDE;
-  // virtual void GenerateData() ITK_OVERRIDE;
-
-
-  /** ResampleImageFilter can be implemented as a multithreaded filter.
-   * Therefore, this implementation provides a ThreadedGenerateData()
-   * routine which is called for each processing thread. The output
-   * image data is allocated automatically by the superclass prior
-   * to calling ThreadedGenerateData().
-   * ThreadedGenerateData can only write to the portion of the output image
-   * specified by the parameter "outputRegionForThread"
-   * \sa ImageToImageFilter::ThreadedGenerateData(),
-   *     ImageToImageFilter::GenerateData() */
   virtual void ThreadedGenerateData(const OutputImageRegionType & outputRegionForThread,
                                     ThreadIdType threadId) ITK_OVERRIDE;
+  // virtual void GenerateData() ITK_OVERRIDE;
 
-  // /** Default implementation for resampling that works for any
-  //  * transformation type. */
-  // virtual void NonlinearThreadedGenerateData(const OutputImageRegionType &
-  //                                            outputRegionForThread,
-  //                                            ThreadIdType threadId);
-
-  /** Implementation for resampling that works for with linear
-   *  transformation types.
-   */
-  // virtual void LinearThreadedGenerateData(const OutputImageRegionType &
-  //                                         outputRegionForThread,
-  //                                         ThreadIdType threadId);
 
   virtual PixelType CastPixelWithBoundsChecking( const InterpolatorOutputType value,
                                                  const ComponentType minComponent,
                                                  const ComponentType maxComponent) const;
 
-
-  /** Static function used as a "callback" by the MultiThreader.  The threading
-   * library will call this routine for each thread, which will delegate the
-   * control to ThreadedGenerateData(). */
-  // static ITK_THREAD_RETURN_TYPE ThreaderCallback(void *arg);
-
-  /** Internal structure used for passing image data into the threading library
-    */
-  // struct ThreadStruct {
-  //   Pointer Filter;
-  //   Pointer FilterFoo; //Used to split input image region
-  // };
 
 private:
   OrientedGaussianInterpolateImageFilter(const Self &) ITK_DELETE_FUNCTION;
@@ -499,6 +476,7 @@ private:
   ArrayType                                 m_CutoffDistance;
 
   bool                                      m_UseJacobian;
+  bool                                      m_UseImageDirection;
   typename JacobianBaseType::Pointer        m_Jacobian;
 
 };
