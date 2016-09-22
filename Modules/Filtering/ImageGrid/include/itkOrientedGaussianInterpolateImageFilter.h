@@ -298,8 +298,8 @@ public:
    * The default value of this flag is On.
    */
   itkSetMacro(UseImageDirection, bool);
-  itkGetConstMacro(UseImageDirection, bool);
   itkBooleanMacro(UseImageDirection);
+  itkGetConstMacro(UseImageDirection, bool);
 
 
   /**
