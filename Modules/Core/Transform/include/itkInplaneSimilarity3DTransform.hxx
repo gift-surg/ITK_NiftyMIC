@@ -31,6 +31,8 @@ InplaneSimilarity3DTransform<TParametersValueType>
   Superclass(ParametersDimension),
   m_Scale(1.0)
 {
+  this->m_DirectionMatrix.SetIdentity();
+  this->m_DirectionMatrixInverse.SetIdentity();
 }
 
 // Constructor with arguments
@@ -40,6 +42,8 @@ InplaneSimilarity3DTransform<TParametersValueType>
   Superclass(paramDim),
   m_Scale(1.0)
 {
+  this->m_DirectionMatrix.SetIdentity();
+  this->m_DirectionMatrixInverse.SetIdentity();
 }
 
 // Constructor with arguments
@@ -49,6 +53,8 @@ InplaneSimilarity3DTransform<TParametersValueType>
   Superclass(matrix, offset),
   m_Scale(1.0)
 {
+  this->m_DirectionMatrix.SetIdentity();
+  this->m_DirectionMatrixInverse.SetIdentity();
 }
 
 // / Set the parameters to the IdentityTransform
@@ -59,6 +65,8 @@ InplaneSimilarity3DTransform<TParametersValueType>
 {
   this->Superclass::SetIdentity();
   this->m_Scale = 1.0;
+  this->m_DirectionMatrix.SetIdentity();
+  this->m_DirectionMatrixInverse.SetIdentity();
 }
 
 // Set the scale factor
@@ -103,7 +111,7 @@ InplaneSimilarity3DTransform<TParametersValueType>
   // It will imply a reflection of the coordinate system.
   //
 
-  double s = vnl_math_cuberoot(det);
+  double s = sqrt(det);
 
   //
   // A negative scale is not acceptable
@@ -115,7 +123,9 @@ InplaneSimilarity3DTransform<TParametersValueType>
     }
 
   MatrixType testForOrthogonal = matrix;
-  testForOrthogonal /= s;
+  const MatrixType matrixTransform = this->GetMatrixTransform(s);
+
+  testForOrthogonal = matrix*(matrixTransform.GetInverse());
 
   if( !this->MatrixIsOrthogonal(testForOrthogonal, tolerance) )
     {
@@ -126,7 +136,10 @@ InplaneSimilarity3DTransform<TParametersValueType>
   this->Baseclass::SetMatrix(matrix);
 }
 
+
 // Set Parameters
+// ME: Always set SetFixedParameters before SetParameters. Otherwise, no
+// correct update of ComputeMatrixParameters will be done!
 template<typename TParametersValueType>
 void
 InplaneSimilarity3DTransform<TParametersValueType>
@@ -180,10 +193,19 @@ InplaneSimilarity3DTransform<TParametersValueType>
   // parameters and cannot know if the parameters have changed.
   this->Modified();
 
+  // std::cout << "-----------------------------------------------------------" << std::endl;
+  // std::cout << "\tParameters = " << this->m_Parameters << std::endl << std::endl;
+  // std::cout << "\tDirectionMatrix = " << this->m_DirectionMatrix << std::endl;
+  // std::cout << "\tDirectionMatrixInverse = " << this->m_DirectionMatrixInverse << std::endl;
+  // std::cout << "\tMatrixTransform(lambda=" << this->m_Scale << ") = " << this->GetMatrixTransform(this->m_Scale) << std::endl;
+  // std::cout << "\tMatrix = " << this->GetMatrix() << std::endl;
+
   itkDebugMacro(<< "After setting parameters ");
 }
 
 
+// ME: Always set SetFixedParameters before SetParameters. Otherwise, no
+// correct update of ComputeMatrixParameters will be done!
 template<typename TParametersValueType>
 void
 InplaneSimilarity3DTransform<TParametersValueType>
@@ -208,20 +230,6 @@ InplaneSimilarity3DTransform<TParametersValueType>
   // std::cout << "DirectionMatrix = " << this->m_DirectionMatrix << std::endl;
 }
 
-template<typename TParametersValueType>
-const typename InplaneSimilarity3DTransform<TParametersValueType>::FixedParametersType
-& InplaneSimilarity3DTransform<TParametersValueType>
-::GetFixedParameters(void) const
-{
-  const InputPointType center = this->GetCenter();
-
-  for( unsigned int i = 0; i < InputSpaceDimension; ++i )
-    {
-    this->m_FixedParameters[i] = center[i];
-    }
-  return this->m_FixedParameters;
-}
-
 //
 // Get Parameters
 //
@@ -229,9 +237,8 @@ const typename InplaneSimilarity3DTransform<TParametersValueType>::FixedParamete
 //
 // p[0:2] = right part of the versor (axis times std::sin(t/2))
 // p[3:5} = translation components
-// p[6:6} = scaling factor (isotropic)
+// p[6:6} = scaling factor (in-plane)
 //
-
 template<typename TParametersValueType>
 const typename InplaneSimilarity3DTransform<TParametersValueType>::ParametersType
 & InplaneSimilarity3DTransform<TParametersValueType>
@@ -255,6 +262,22 @@ const typename InplaneSimilarity3DTransform<TParametersValueType>::ParametersTyp
   return this->m_Parameters;
   }
 
+
+template<typename TParametersValueType>
+const typename InplaneSimilarity3DTransform<TParametersValueType>::FixedParametersType
+& InplaneSimilarity3DTransform<TParametersValueType>
+::GetFixedParameters(void) const
+{
+  const InputPointType center = this->GetCenter();
+
+  for( unsigned int i = 0; i < InputSpaceDimension; ++i )
+    {
+    this->m_FixedParameters[i] = center[i];
+    }
+  // std::cout<<this->m_FixedParameters << std::endl;
+  return this->m_FixedParameters;
+}
+
 template<typename TParametersValueType>
 void
 InplaneSimilarity3DTransform<TParametersValueType>::ComputeJacobianWithRespectToParameters(const InputPointType & p,
@@ -271,7 +294,7 @@ InplaneSimilarity3DTransform<TParametersValueType>::ComputeJacobianWithRespectTo
   jacobian.SetSize( 3, this->GetNumberOfLocalParameters() );
   jacobian.Fill(0.0);
 
-  const MatrixType &matrixTransform = this->GetMatrixTransform(m_Scale);
+  const MatrixType matrixTransform = this->GetMatrixTransform(m_Scale);
 
   const InputVectorType pp = matrixTransform*(p - this->GetCenter());
 
@@ -346,8 +369,8 @@ InplaneSimilarity3DTransform<TParametersValueType>
 {
   this->Superclass::ComputeMatrix();
   MatrixType newMatrix = this->GetMatrix();
-  const MatrixType &matrixTransform = this->GetMatrixTransform(m_Scale);
-  newMatrix = newMatrix*matrixTransform;
+  const MatrixType matrixTransform = this->GetMatrixTransform(m_Scale);
+  newMatrix = newMatrix * matrixTransform;
   // std::cout<< "newMatrix = " << newMatrix << std::endl;
 
   this->SetVarMatrix(newMatrix);
@@ -361,9 +384,9 @@ InplaneSimilarity3DTransform<TParametersValueType>
 {
   MatrixType matrix = this->GetMatrix();
   m_Scale = sqrt( vnl_det( matrix.GetVnlMatrix() ) );
-  const MatrixType &matrixTransform = this->GetMatrixTransform(m_Scale);
+  const MatrixType matrixTransform = this->GetMatrixTransform(m_Scale);
 
-  matrix = matrix*matrixTransform.GetInverse();
+  matrix = matrix*(matrixTransform.GetInverse());
 
   VersorType v;
   v.Set(matrix);
@@ -375,18 +398,16 @@ typename InplaneSimilarity3DTransform<TParametersValueType>::MatrixType
 InplaneSimilarity3DTransform<TParametersValueType>
 ::GetMatrixTransform(const ScaleType &scale) const
 {
-  MatrixType matrix;
-  matrix.SetIdentity();
-  matrix(0,0) = scale;
-  matrix(1,1) = scale;
+  MatrixType Lambda;
+  Lambda.SetIdentity();
+  Lambda(0,0) = scale;
+  Lambda(1,1) = scale;
 
-  // std::cout<< "matrix = " << matrix << std::endl;
+  // std::cout<< "Lambda = " << Lambda << std::endl;
   // std::cout<< "m_DirectionMatrix = " << m_DirectionMatrix << std::endl;
   // std::cout<< "m_DirectionMatrixInverse = " << m_DirectionMatrixInverse << std::endl;
 
-  matrix = m_DirectionMatrix * matrix * m_DirectionMatrixInverse;
-
-  return matrix;
+  return m_DirectionMatrix * Lambda * m_DirectionMatrixInverse;
 }
 
 

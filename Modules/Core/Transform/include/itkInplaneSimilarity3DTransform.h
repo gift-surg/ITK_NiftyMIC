@@ -114,11 +114,15 @@ public:
    * used by optimizers.  There are 7 parameters. The first three represent the
    * versor, the next three represent the translation and the last one
    * represents the scaling factor. */
+  // ME: Always set SetFixedParameters before SetParameters. Otherwise, no
+  // correct update of ComputeMatrixParameters will be done!
   void SetParameters(const ParametersType & parameters) ITK_OVERRIDE;
 
   virtual const ParametersType & GetParameters(void) const ITK_OVERRIDE;
 
   /** Set the fixed parameters and update internal transformation. */
+  // ME: Always set SetFixedParameters before SetParameters. Otherwise, no
+  // correct update of ComputeMatrixParameters will be done!
   virtual void SetFixedParameters(const FixedParametersType &) ITK_OVERRIDE;
 
   /** Get the Fixed Parameters. */
