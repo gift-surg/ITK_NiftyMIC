@@ -125,7 +125,7 @@ InplaneSimilarity3DTransform<TParametersValueType>
   MatrixType testForOrthogonal = matrix;
   const MatrixType matrixTransform = this->GetMatrixTransform(s);
 
-  testForOrthogonal = matrix*(matrixTransform.GetInverse());
+  testForOrthogonal = matrix * matrixTransform.GetInverse();
 
   if( !this->MatrixIsOrthogonal(testForOrthogonal, tolerance) )
     {
@@ -296,7 +296,7 @@ InplaneSimilarity3DTransform<TParametersValueType>::ComputeJacobianWithRespectTo
 
   const MatrixType matrixTransform = this->GetMatrixTransform(m_Scale);
 
-  const InputVectorType pp = matrixTransform*(p - this->GetCenter());
+  const InputVectorType pp = matrixTransform * (p - this->GetCenter());
 
   const double px = pp[0];
   const double py = pp[1];
@@ -386,7 +386,7 @@ InplaneSimilarity3DTransform<TParametersValueType>
   m_Scale = sqrt( vnl_det( matrix.GetVnlMatrix() ) );
   const MatrixType matrixTransform = this->GetMatrixTransform(m_Scale);
 
-  matrix = matrix*(matrixTransform.GetInverse());
+  matrix = matrix * matrixTransform.GetInverse();
 
   VersorType v;
   v.Set(matrix);

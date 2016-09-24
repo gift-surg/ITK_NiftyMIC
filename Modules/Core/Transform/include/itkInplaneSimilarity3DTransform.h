@@ -26,18 +26,35 @@ namespace itk
 /** \class InplaneSimilarity3DTransform
  * \brief InplaneSimilarity3DTransform of a vector space (e.g. space coordinates)
  *
- * This transform applies a rotation, translation and isotropic scaling to the space.
+ * This transform applies a rotation, translation to the space and isotropic
+ * in-plane scaling of x and y voxel spacings. The idea is to use this to
+ * extract the right in-plane scaling of the fixed image during registration.
  *
- * The parameters for this transform can be set either using individual Set
- * methods or in serialized form using SetParameters() and SetFixedParameters().
+ * The rigid transform parameters and the scaling factor of the in-plane
+ * spacing of the fixed image will be estimated so that it matches the moving
+ * image.
+ *
+ * The direction matrix of the fixed image needs to be provided via the
+ * SetFixedParameters method, i.e. appended after the center coordinates.
  *
  * The serialization of the optimizable parameters is an array of 7 elements.
  * The first 3 elements are the components of the versor representation
  * of 3D rotation. The next 3 parameters defines the translation in each
- * dimension. The last parameter defines the isotropic scaling.
+ * dimension. The last parameter defines the isotropic in-plane scaling.
  *
  * The serialization of the fixed parameters is an array of 3 elements defining
- * the center of rotation.
+ * the center of rotation and another 9 elements defining the row-wise
+ * representation of the fixed image direction matrix.
+ *
+ * After registration, update the fixed image spacing with
+ * spacing[0] *= scale and spacing[1]*scale. In order to have an aligned fixed
+ * image with the moving image, create a VersorRigid3DTransform object and
+ * set versors coordinates according to the registration result and set the
+ * translation to
+ * R*D*Lambda*Dinv*(origin-center) + R*(center-origin) + translation + center
+ * with R and center being the rotation matrix and center according to the
+ * registration and D and origin the direction matrix and the origin of the
+ * fixed image, respectively.
  *
  *
  * \sa VersorRigid3DTransform
