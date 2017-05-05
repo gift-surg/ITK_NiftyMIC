@@ -258,7 +258,8 @@ OrientedGaussianInterpolateImageFilter< TInputImage, TOutputImage, TInterpolator
     m_Jacobian->CopyInformation(outputPtr);
     m_Jacobian->SetBufferedRegion( outputPtr->GetBufferedRegion() );
     m_Jacobian->Allocate();
-    m_Jacobian->FillBuffer( itk::NumericTraits< PixelType >::Zero );
+    m_Jacobian->FillBuffer( 0.0 );
+    // m_Jacobian->FillBuffer( itk::NumericTraits< PixelType >::Zero );
   }
 
   // std::cout << "m_BoundingBoxStart = " << this->m_BoundingBoxStart << std::endl;
