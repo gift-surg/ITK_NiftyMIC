@@ -57,20 +57,24 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
     this->m_BoundingBoxStart[d] = -0.5;
+    // ? ME: static_cast<RealType>( size[d] )?
     this->m_BoundingBoxEnd[d] = static_cast<RealType>( size[d] ) - 0.5;
     this->m_ScalingFactor[d] = 1.0 / ( itk::Math::sqrt2 * this->m_Sigma[d] / spacing[d] );
     this->m_CutOffDistance[d] = this->m_Sigma[d] * this->m_Alpha / spacing[d];
     }
 }
 
+
+// ME: Compute intensity value of one single voxel based on Gaussian interpolation
 template<typename TImageType, typename TCoordRep>
 typename GaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::OutputType
 GaussianInterpolateImageFunction<TImageType, TCoordRep>
 ::EvaluateAtContinuousIndex( const ContinuousIndexType & cindex, OutputType *grad ) const
 {
-  vnl_vector<RealType> erfArray[ImageDimension];
-  vnl_vector<RealType> gerfArray[ImageDimension];
+  // ME: Where is ImageDimension defined?
+  vnl_vector<RealType> erfArray[ImageDimension];  // ME: error function
+  vnl_vector<RealType> gerfArray[ImageDimension]; // ME: gradient error function
 
   // Compute the ERF difference arrays
   for( unsigned int d = 0; d < ImageDimension; d++ )
@@ -95,6 +99,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   dw.Fill( 0.0 );
 
   // Loop over the voxels in the region identified
+  // ME: First, compute rectangular region which is to be considered, i.e. have non-zero Gaussian weights
   ImageRegion<ImageDimension> region;
   for( unsigned int d = 0; d < ImageDimension; d++ )
     {
@@ -108,12 +113,15 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
     region.SetSize( d, end - begin );
     }
 
+  // ME: Define iterator over chosen region
   ImageRegionConstIteratorWithIndex<InputImageType> It(
     this->GetInputImage(), region );
+
+  // ME: For each voxel of that region do
   for( It.GoToBegin(); !It.IsAtEnd(); ++It )
     {
-    unsigned int j = It.GetIndex()[0];
-    RealType w = erfArray[0][j];
+    unsigned int j = It.GetIndex()[0];    // ? ME: What do I get here exactly?
+    RealType w = erfArray[0][j];          // ME: Get weight of current element (first coordinate out of ImageDimension dimensions)
     if( grad )
       {
       dw[0] = gerfArray[0][j];
@@ -122,10 +130,13 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
         dw[d] = erfArray[0][j];
         }
       }
+    // ME: Compute weight of voxel
     for( unsigned int d = 1; d < ImageDimension; d++)
       {
       j = It.GetIndex()[d];
-      w *= erfArray[d][j];
+      // ? ME: This must assume a diagonal covariance matrix!?
+      // ? ME: Otherwise not just a simple multiplication of weights
+      w *= erfArray[d][j];    // ME: Update weight
       if( grad )
         {
         for( unsigned int q = 0; q < ImageDimension; q++ )
@@ -141,9 +152,9 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
           }
         }
       }
-    RealType V = It.Get();
-    sum_me += V * w;
-    sum_m += w;
+    RealType V = It.Get();  // ME: Intensity of current voxel
+    sum_me += V * w;        // ME: Add Gaussian weighted intensity
+    sum_m += w;             // ME: Record weight sum for subsequent normalization
     if( grad )
       {
       for( unsigned int q = 0; q < ImageDimension; q++ )
@@ -153,7 +164,7 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
         }
       }
     }
-  RealType rc = sum_me / sum_m;
+  RealType rc = sum_me / sum_m;   // ME: Final Gaussian interpolated voxel intensity
 
   if( grad )
     {
@@ -191,16 +202,20 @@ GaussianInterpolateImageFunction<TImageType, TCoordRep>
   // Start at the first voxel
   RealType t = ( this->m_BoundingBoxStart[dimension] - cindex +
     static_cast<RealType>( begin ) ) * this->m_ScalingFactor[dimension];
-  RealType e_last = vnl_erf( t );
-  RealType g_last = 0.0;
+  // ME: vnl_erf(t) = (2/sqrt(pi)) Integral from 0 to t (exp(-x^2) dx)
+  RealType e_last = vnl_erf( t );   // ME: error function
+  RealType g_last = 0.0;            // ME: gradient
   if( evaluateGradient )
     {
     g_last = itk::Math::two_over_sqrtpi * std::exp( -itk::Math::sqr( t ) );
     }
 
+  // ME: Computation of (standard) Gaussian weights (up to a constant)
+  // ME: of each node given by spacing
   for( int i = begin; i < end; i++ )
     {
     t += this->m_ScalingFactor[dimension];
+    // ? ME: Shouldn't it be
     RealType e_now = vnl_erf( t );
     erfArray[i] = e_now - e_last;
     if( evaluateGradient )
