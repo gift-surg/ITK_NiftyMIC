@@ -23,9 +23,6 @@ itk_fetch_module(BridgeNumPy
   # GIT_REPOSITORY ${git_protocol}://github.com/InsightSoftwareConsortium/ITKBridgeNumPy.git
   # GIT_TAG 249e7be2d012c66b605498b1ce2b4b46498e0680
 
-  # GIT_REPOSITORY ${git_protocol}://mebner@cmiclab.cs.ucl.ac.uk/mebner/BridgeNumPy.git
-  # GIT_TAG 35797c8bb8fc4846dbc909d5df9e756b1296a2b5
-
   GIT_REPOSITORY ${git_protocol}://github.com/renbem/ITKBridgeNumPy.git
-  GIT_TAG cd689fef5745d7c892aaba3a13e377200e21b4ab
+  GIT_TAG 7affbdaf18673fa347dbf98834dc9adc193e0ae5
   )
