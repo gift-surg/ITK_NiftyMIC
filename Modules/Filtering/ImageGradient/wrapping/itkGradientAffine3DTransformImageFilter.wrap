@@ -1,0 +1,15 @@
+itk_wrap_class("itk::GradientAffine3DTransformImageFilter" POINTER)
+
+  # if(ITK_WRAP_covariant_vector_float)
+  #   itk_wrap_template(
+  #     "${ITKM_IF3}${ITKM_F}${ITKM_F}"
+  #     "${ITKT_IF3},${ITKT_F},${ITKT_F}")
+  # endif(ITK_WRAP_covariant_vector_float)
+
+  if(ITK_WRAP_covariant_vector_double)
+    itk_wrap_template(
+      "${ITKM_ID3}${ITKM_D}${ITKM_D}"
+      "${ITKT_ID3},${ITKT_D},${ITKT_D}")
+  endif(ITK_WRAP_covariant_vector_double)
+
+itk_end_wrap_class()

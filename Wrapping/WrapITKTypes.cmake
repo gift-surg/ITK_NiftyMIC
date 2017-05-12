@@ -70,7 +70,8 @@ set(itk_Wrap_Offset ${WRAPPER_TEMPLATES})
 WRAP_TYPE("itk::Vector" "V" "itkVector.h")
   # dim 6 is used by ScaleSkewVersor3DTransform
   # dim 18 is used by GradientEuler3DTransformImageFilter
-  UNIQUE(vector_dims "1;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED};6;18")
+  # dim 36 is used by GradientAffine3DTransformImageFilter
+  UNIQUE(vector_dims "1;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED};6;18;36")
   UNIQUE(vector_types "UC;F;D;${WRAP_ITK_SCALAR}")
   foreach(vector_dim ${vector_dims})
     foreach(t ${vector_types})
@@ -98,7 +99,15 @@ WRAP_TYPE("itk::CovariantVector" "CV" "itkCovariantVector.h")
   ADD_TEMPLATE(
     "${ITKM_D}18"
     "${ITKT_D},18")
-END_WRAP_TYPE()
+  END_WRAP_TYPE()
+  # Used in GradientAffine3DTransformImageFilter
+  # ADD_TEMPLATE(
+  #   "${ITKM_F}36"
+  #   "${ITKT_F},36")
+  ADD_TEMPLATE(
+    "${ITKM_D}36"
+    "${ITKT_D},36")
+  END_WRAP_TYPE()
 set(itk_Wrap_CovariantVector ${WRAPPER_TEMPLATES})
 
 WRAP_TYPE("itk::ContinuousIndex" "CI" "itkContinuousIndex.h")
@@ -140,8 +149,9 @@ WRAP_TYPE("itk::FixedArray" "FA" "itkFixedArray.h")
   # Dimension 9 is added for easier matrix handling in 3D (i.e. 9 entries),
   #   particularly used for (Adjoint) Oriented Gaussian Interpolate Filters
   # Dimension 18 is used for GradientEuler3DTransformImageFilter
+  # Dimension 36 is used for GradientAffine3DTransformImageFilter
 
-  UNIQUE(array_sizes "${dims};1;2;3;4;6;9;18;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED}")
+  UNIQUE(array_sizes "${dims};1;2;3;4;6;9;18;36;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED}")
 
   # 3-D FixedArrays are required as superclass of rgb pixels
   # TODO: Do we need fixed arrays for all of these types? For just the selected
@@ -282,6 +292,9 @@ WRAP_TYPE("itk::Image" "I" "itkImage.h")
   # Used in GradientEuler3DTransformImageFilter
   # ADD_TEMPLATE("${ITKM_CVF18}3" "${ITKT_CVF18},3")
   ADD_TEMPLATE("${ITKM_CVD18}3" "${ITKT_CVD18},3")
+  # Used in GradientAffine3DTransformImageFilter
+  # ADD_TEMPLATE("${ITKM_CVF36}3" "${ITKT_CVF36},3")
+  ADD_TEMPLATE("${ITKM_CVD36}3" "${ITKT_CVD36},3")
 
 END_WRAP_TYPE()
 set(itk_Wrap_Image ${WRAPPER_TEMPLATES})
