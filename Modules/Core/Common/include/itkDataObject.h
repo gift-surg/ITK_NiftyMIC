@@ -35,8 +35,9 @@
 
 namespace itk
 {
-class ProcessObject;
-class DataObject;
+// Forward reference because of circular dependencies
+class ITK_FORWARD_EXPORT ProcessObject;
+class ITK_FORWARD_EXPORT DataObject;
 
 /*--------------------Data Object Exceptions---------------------------*/
 
@@ -80,7 +81,7 @@ protected:
   /** Print exception information.  This method can be overridden by
    * specific exception subtypes.  The default is to print out the
    * location where the exception was first thrown and any description
-   * provided by the ``thrower''.   */
+   * provided by the "thrower".   */
   virtual void PrintSelf(std::ostream & os, Indent indent) const;
 
 private:
@@ -123,7 +124,7 @@ protected:
   /** Print exception information.  This method can be overridden by
    * specific exception subtypes.  The default is to print out the
    * location where the exception was first thrown and any description
-   * provided by the ``thrower''.   */
+   * provided by the "thrower".   */
   virtual void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 };
 
@@ -272,7 +273,7 @@ protected:
  * \ingroup ITKSystemObjects
  * \ingroup ITKCommon
  */
-class ITKCommon_EXPORT DataObject:public Object
+class ITK_FORCE_EXPORT_MACRO(ITKCommon) DataObject:public Object
 {
 public:
   /** Standard class typedefs. */
@@ -480,7 +481,7 @@ public:
 
 protected:
   DataObject();
-  ~DataObject();
+  virtual ~DataObject();
   virtual void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE;
 
   /** Propagate a call to ResetPipeline(). Called only from ProcessObject. */

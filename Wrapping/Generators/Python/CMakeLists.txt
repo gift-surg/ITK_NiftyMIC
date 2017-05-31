@@ -14,6 +14,13 @@ if(PYTHONLIBS_FOUND AND PYTHONINTERP_FOUND
   message(WARNING "Python executable (\"${PYTHON_VERSION_STRING}\") and library (\"${PYTHONLIBS_VERSION_STRING}\") version mismatch.")
 endif()
 
+if(NOT EXTERNAL_WRAP_ITK_PROJECT)
+  CMAKE_DEPENDENT_OPTION(ITK_WRAP_PYTHON_LEGACY "Build Legacy Python support." ON
+                         "ITK_WRAP_PYTHON" OFF)
+else()
+  set(ITK_WRAP_PYTHON_LEGACY OFF)
+endif()
+
 mark_as_advanced(PYTHON_EXECUTABLE)
 include_directories("${PYTHON_INCLUDE_DIRS}")
 
@@ -135,15 +142,10 @@ if(NOT EXTERNAL_WRAP_ITK_PROJECT)
   foreach(t ${WRAP_ITK_COMPLEX_REAL})
     list(APPEND ITK_WRAP_PYTHON_COMPLEX_REAL ${ITKT_${t}})
   endforeach()
-  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/WrapITKBuildOptionsPython.py.in"
-                 "${ITK_WRAP_PYTHON_BINARY_DIR}/WrapITKBuildOptionsPython.py"
+  configure_file("${CMAKE_CURRENT_SOURCE_DIR}/itkBuildOptions.py.in"
+                 "${ITK_WRAP_PYTHON_BINARY_DIR}/itkBuildOptions.py"
                 @ONLY)
-  WRAP_ITK_PYTHON_BINDINGS_INSTALL(/ "${ITK_WRAP_PYTHON_BINARY_DIR}/WrapITKBuildOptionsPython.py")
-
-  file(COPY "${CMAKE_CURRENT_SOURCE_DIR}/WrapITKBuildOptionsConfig.py"
-       DESTINATION "${CMAKE_CURRENT_BINARY_DIR}/Configuration/")
-  WRAP_ITK_PYTHON_BINDINGS_INSTALL(/itk/Configuration "${CMAKE_CURRENT_SOURCE_DIR}/WrapITKBuildOptionsConfig.py")
-
+  WRAP_ITK_PYTHON_BINDINGS_INSTALL(/ "${ITK_WRAP_PYTHON_BINARY_DIR}/itkBuildOptions.py")
 endif()
 
 
@@ -366,14 +368,16 @@ macro(itk_end_wrap_module_python)
     "${ITK_WRAP_PYTHON_BINARY_DIR}/Configuration/${WRAPPER_LIBRARY_NAME}Config.py"
   )
 
-  # create the advanced lib module python file
-  # this file lets the final user use something like "import ITKModuleName"
-  # backwards compatibility -- to be removed
-  set(CONFIG_LIBRARY_NAME "${WRAPPER_LIBRARY_NAME}")
-  configure_file("${ITK_WRAP_PYTHON_SOURCE_DIR}/ModuleLoader.py.in"
-    "${CMAKE_CURRENT_BINARY_DIR}/${WRAPPER_LIBRARY_NAME}.py"
-    @ONLY)
-  WRAP_ITK_PYTHON_BINDINGS_INSTALL(/ "${CMAKE_CURRENT_BINARY_DIR}/${WRAPPER_LIBRARY_NAME}.py")
+  if(ITK_WRAP_PYTHON_LEGACY)
+    # create the advanced lib module python file
+    # this file lets the final user use something like "import ITKModuleName"
+    # backwards compatibility -- to be removed
+    set(CONFIG_LIBRARY_NAME "${WRAPPER_LIBRARY_NAME}")
+    configure_file("${ITK_WRAP_PYTHON_SOURCE_DIR}/ModuleLoader.py.in"
+      "${CMAKE_CURRENT_BINARY_DIR}/${WRAPPER_LIBRARY_NAME}.py"
+      @ONLY)
+    WRAP_ITK_PYTHON_BINDINGS_INSTALL(/ "${CMAKE_CURRENT_BINARY_DIR}/${WRAPPER_LIBRARY_NAME}.py")
+  endif()
 
   set(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_DECLS )
   set(ITK_WRAP_PYTHON_GLOBAL_TIMESTAMP_CALLS )
@@ -473,7 +477,7 @@ _ITKCommonPython_GetGlobalTimeStamp_PROTO
     target_link_libraries(${lib} LINK_PUBLIC ${WRAPPER_LIBRARY_LINK_LIBRARIES})
     itk_target_link_libraries_with_dynamic_lookup(${lib} LINK_PUBLIC ${PYTHON_LIBRARY})
 
-    if(CMAKE_VERSION VERSION_GREATER 2.8.12 AND USE_COMPILER_HIDDEN_VISIBILITY AND BUILD_SHARED_LIBS)
+    if(CMAKE_VERSION VERSION_GREATER 2.8.12 AND USE_COMPILER_HIDDEN_VISIBILITY)
       # Prefer to use target properties supported by newer cmake
       set_target_properties(${lib} PROPERTIES CXX_VISIBILITY_PRESET hidden)
       set_target_properties(${lib} PROPERTIES C_VISIBILITY_PRESET hidden)
@@ -876,7 +880,12 @@ endmacro()
 macro(ADD_PYTHON_VEC_TYPEMAP swig_name template_params)
   string(REGEX REPLACE "(.*),(.*)" "\\1" type "${template_params}")
   string(REGEX REPLACE "(.*),(.*)" "\\2" dim "${template_params}")
-  set(ITK_WRAP_PYTHON_SWIG_EXT "${ITK_WRAP_PYTHON_SWIG_EXT}DECL_PYTHON_VEC_TYPEMAP(${swig_name}, ${type}, ${dim})\n")
+  # Black listing all types that contain a comma which would create issues
+  # in C/C++ macros
+  string(REGEX MATCH "(.*,.*)" isTemplate "${type}")
+  if(NOT isTemplate)
+    set(ITK_WRAP_PYTHON_SWIG_EXT "${ITK_WRAP_PYTHON_SWIG_EXT}DECL_PYTHON_VEC_TYPEMAP(${swig_name}, ${type}, ${dim})\n")
+  endif()
 endmacro()
 
 macro(ADD_PYTHON_VARIABLE_LENGTH_SEQ_TYPEMAP type value_type)

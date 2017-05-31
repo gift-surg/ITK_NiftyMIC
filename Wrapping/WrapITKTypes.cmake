@@ -123,6 +123,7 @@ WRAP_TYPE("itk::Array" "A" "itkArray.h")
   ADD_TEMPLATE("${ITKM_F}" "${ITKT_F}")
   ADD_TEMPLATE("${ITKM_UL}" "${ITKT_UL}")
   ADD_TEMPLATE("${ITKM_SL}" "${ITKT_SL}")
+  ADD_TEMPLATE("${ITKM_UI}" "${ITKT_UI}")
   if(WIN32 AND ITK_USE_64BITS_IDS)
     ADD_TEMPLATE("${ITKM_ULL}" "${ITKT_ULL}")
     ADD_TEMPLATE("${ITKM_SLL}" "${ITKT_SLL}")
@@ -180,9 +181,8 @@ WRAP_TYPE("itk::RGBPixel" "RGB" "itkRGBPixel.h")
 
   ADD_TEMPLATE("${ITKM_UC}" "${ITKT_UC}")
 
-  if(ITK_WRAP_rgb_unsigned_short)
-    ADD_TEMPLATE("${ITKM_US}" "${ITKT_US}")
-  endif()
+  # Required by itkTIFFImageIO
+  ADD_TEMPLATE("${ITKM_US}" "${ITKT_US}")
 
 END_WRAP_TYPE()
 set(itk_Wrap_RGBPixel ${WRAPPER_TEMPLATES})

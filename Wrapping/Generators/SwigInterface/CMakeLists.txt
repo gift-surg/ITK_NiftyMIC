@@ -23,9 +23,9 @@ mark_as_advanced(ITK_USE_SYSTEM_SWIG)
 # Minimal swig version
 set(swig_version_min 3.0.0)
 
-set(ITK_SWIG_VERSION 3.0.11)
-set(swig_md5     13732eb0f1ab2123d180db8425c1edea)
-set(swigwin_md5  5cc57e3658f62b7f648bec7eed91a4f0)
+set(ITK_SWIG_VERSION 3.0.12)
+set(swig_md5     "82133dfa7bba75ff9ad98a7046be687c")
+set(swigwin_md5  "a49524dad2c91ae1920974e7062bfc93")
 
 if(WIN32)
   set(swig_ep "${CMAKE_CURRENT_BINARY_DIR}/swigwin-${ITK_SWIG_VERSION}/swig.exe")
@@ -141,9 +141,11 @@ else()
               install
         )
       endif()
+      set(pcre_md5 890c808122bd90f398e6bc40ec862102)
+      set(pcre_version 8.40)
       ExternalProject_Add(PCRE
-        URL https://midas3.kitware.com/midas/download/bitstream/458372/pcre-8.38.tar.gz
-        URL_MD5 8a353fe1450216b6655dfcf3561716d9
+        URL "https://midas3.kitware.com/midas/api/rest?method=midas.bitstream.download&checksum=${pcre_md5}&name=pcre-${pcre_version}.tar.gz"
+        URL_MD5 ${pcre_md5}
         CONFIGURE_COMMAND
           ${pcre_env}
           ../PCRE/configure
@@ -343,7 +345,6 @@ macro(itk_end_wrap_module_swig_interface)
   set(CONFIG_INDEX_FILE_CONTENT "${SWIG_INTERFACE_MDX_CONTENT}")
   configure_file("${ITK_WRAP_SWIGINTERFACE_SOURCE_DIR}/Master.mdx.in" "${mdx_file}"
      @ONLY)
-  WRAP_ITK_INSTALL("/Configuration/Typedefs" "${mdx_file}")
 
   set(CONFIG_MODULE_INTERFACE_CONTENT ) #"${deps_imports}${SWIG_INTERFACE_MODULE_CONTENT}")
   configure_file("${ITK_WRAP_SWIGINTERFACE_SOURCE_DIR}/module.i.in" "${module_interface_file}"

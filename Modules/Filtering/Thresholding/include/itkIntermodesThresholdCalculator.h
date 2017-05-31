@@ -57,16 +57,16 @@ class ITK_TEMPLATE_EXPORT IntermodesThresholdCalculator : public HistogramThresh
 {
 public:
   /** Standard class typedefs. */
-  typedef IntermodesThresholdCalculator   Self;
-  typedef Object                          Superclass;
-  typedef SmartPointer<Self>              Pointer;
-  typedef SmartPointer<const Self>        ConstPointer;
+  typedef IntermodesThresholdCalculator                     Self;
+  typedef HistogramThresholdCalculator<THistogram, TOutput> Superclass;
+  typedef SmartPointer<Self>                                Pointer;
+  typedef SmartPointer<const Self>                          ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(IntermodesThresholdCalculator, Object);
+  itkTypeMacro(IntermodesThresholdCalculator, HistogramThresholdCalculator);
 
   /** Type definition for the input image. */
   typedef THistogram  HistogramType;
@@ -77,10 +77,11 @@ public:
   itkSetMacro( MaximumSmoothingIterations, SizeValueType );
   itkGetConstMacro( MaximumSmoothingIterations, SizeValueType );
 
-  /** select whether midpoint (intermode=true) or minimum between
-  peaks is used */
+  /** Select whether midpoint (intermode = true) or minimum between
+  peaks is used. Default is "On". */
   itkSetMacro( UseInterMode, bool);
   itkGetConstMacro( UseInterMode, bool );
+  itkBooleanMacro( UseInterMode );
 
 protected:
   IntermodesThresholdCalculator()

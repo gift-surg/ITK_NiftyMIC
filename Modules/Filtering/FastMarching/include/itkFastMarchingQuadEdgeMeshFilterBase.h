@@ -165,11 +165,14 @@ protected:
   void InitializeOutput( OutputMeshType* oMesh ) ITK_OVERRIDE;
 
 private:
-  FastMarchingQuadEdgeMeshFilterBase( const Self& );
-  void operator = ( const Self& );
+  ITK_DISALLOW_COPY_AND_ASSIGN(FastMarchingQuadEdgeMeshFilterBase);
+
   const InputMeshType *m_InputMesh;
 };
 }
 
+#ifndef ITK_MANUAL_INSTANTIATION
 #include "itkFastMarchingQuadEdgeMeshFilterBase.hxx"
+#endif
+
 #endif // itkFastMarchingQuadEdgeMeshFilterBase_h

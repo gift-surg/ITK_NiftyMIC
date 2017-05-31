@@ -128,6 +128,7 @@ public:
     */
   typedef enum { EUCLIDEAN = 0, RIEMANNIAN = 1 } ComponentSpaceType;
 
+  /** State that the filter is in, i.e. UNINITIALIZED or INITIALIZED. */
   typedef enum { UNINITIALIZED = 0, INITIALIZED = 1 } FilterStateType;
 
   /** This data structure type is used to store the weights (mask) for pixels in a patch in order to
@@ -176,6 +177,7 @@ public:
   /** Set/Get the weight on the smoothing term.
    *  This option is used when a noise model is specified.
    *  This weight controls the balance between the smoothing and the closeness to the noisy data.
+   *  Large stepsizes may cause instabilities.
    */
   itkSetClampMacro(SmoothingWeight, double, 0.0, 1.0);
   itkGetConstMacro(SmoothingWeight, double);
@@ -183,6 +185,7 @@ public:
   /** Set/Get the weight on the fidelity term (penalizes deviations from the noisy data).
    *  This option is used when a noise model is specified.
    *  This weight controls the balance between the smoothing and the closeness to the noisy data.
+   *  Use a positive weight to prevent oversmoothing.
    */
   itkSetClampMacro(NoiseModelFidelityWeight, double, 0.0, 1.0);
   itkGetConstMacro(NoiseModelFidelityWeight, double);
@@ -222,10 +225,10 @@ public:
   itkBooleanMacro(AlwaysTreatComponentsAsEuclidean);
   itkGetConstMacro(AlwaysTreatComponentsAsEuclidean, bool);
 
-  /** Set the state of the filter to INITIALIZED */
+  /** Set the state of the filter to INITIALIZED. */
   virtual void SetStateToInitialized();
 
-  /** Set the state of the filter to UNINITIALIZED */
+  /** Set the state of the filter to UNINITIALIZED. */
   virtual void SetStateToUninitialized();
 
   /** Set/Get the state of the filter. */
@@ -234,8 +237,10 @@ public:
   itkGetConstReferenceMacro(State, FilterStateType);
 #endif
 
-  /** Require the filter to be manually reinitialized (by calling
-      SetStateToUninitialized() */
+  /** Indicates whether the filter automatically resets to UNINITIALIZED state
+   * after completing, or whether filter must be manually reset.
+   * Require the filter to be manually reinitialized (by calling
+   * SetStateToUninitialized(). */
   itkSetMacro(ManualReinitialization, bool);
   itkGetConstReferenceMacro(ManualReinitialization, bool);
   itkBooleanMacro(ManualReinitialization);
@@ -306,6 +311,18 @@ protected:
   return EUCLIDEAN;
   }
 
+  /** Set/Get the component space type. */
+  itkSetMacro(ComponentSpace, ComponentSpaceType);
+  itkGetConstMacro(ComponentSpace, ComponentSpaceType);
+
+  // Cache input and output pointer to get rid of thousands of calls
+  // to GetInput and GetOutput.
+  const InputImageType *m_InputImage;
+  OutputImageType      *m_OutputImage;
+
+private:
+  ITK_DISALLOW_COPY_AND_ASSIGN(PatchBasedDenoisingBaseImageFilter);
+
   /** Parameters that define patch size and patch weights (mask). */
   unsigned int     m_PatchRadius;
   PatchWeightsType m_PatchWeights;
@@ -329,28 +346,14 @@ protected:
   bool               m_AlwaysTreatComponentsAsEuclidean;
   ComponentSpaceType m_ComponentSpace;
 
-  /** Indicates whether the filter automatically resets to UNINITIALIZED state
-      after completing, or whether filter must be manually reset */
   bool m_ManualReinitialization;
 
-  /** cache input and output pointer to get rid of thousands of calls
-   * to GetInput and GetOutput.
-   */
-  const InputImageType *m_InputImage;
-  OutputImageType      *m_OutputImage;
-
-private:
-  ITK_DISALLOW_COPY_AND_ASSIGN(PatchBasedDenoisingBaseImageFilter);
-
-  /** State that the filter is in, i.e. UNINITIALIZED or INITIALIZED */
   FilterStateType m_State;
-
-};  // end class PatchBasedDenoisingBaseImageFilter
-
+};
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkPatchBasedDenoisingBaseImageFilter.hxx"
+#include "itkPatchBasedDenoisingBaseImageFilter.hxx"
 #endif
 
 #endif

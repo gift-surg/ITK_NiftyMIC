@@ -22,7 +22,8 @@
 #include "itkHistogramThresholdImageFilter.h"
 #include "itkLiThresholdCalculator.h"
 
-namespace itk {
+namespace itk
+{
 
 /** \class LiThresholdImageFilter
  * \brief Threshold an image using the Li Threshold
@@ -30,7 +31,7 @@ namespace itk {
  * This filter creates a binary thresholded image that separates an
  * image into foreground and background components. The filter
  * computes the threshold using the LiThresholdCalculator and
- * applies that theshold to the input image using the
+ * applies that threshold to the input image using the
  * BinaryThresholdImageFilter.
  *
  * \author Richard Beare. Department of Medicine, Monash University,
@@ -106,7 +107,7 @@ protected:
 
 private:
   ITK_DISALLOW_COPY_AND_ASSIGN(LiThresholdImageFilter);
-}; // end of class
+};
 
 } // end namespace itk
 

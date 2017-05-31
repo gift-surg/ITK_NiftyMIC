@@ -73,8 +73,8 @@ set(main_project_name ${_ITKModuleMacros_DEFAULT_LABEL})
 #-----------------------------------------------------------------------------
 # ITK version number.
 set(ITK_VERSION_MAJOR "4")
-set(ITK_VERSION_MINOR "11")
-set(ITK_VERSION_PATCH "1")
+set(ITK_VERSION_MINOR "12")
+set(ITK_VERSION_PATCH "0")
 
 if(NOT ITK_INSTALL_RUNTIME_DIR)
   set(ITK_INSTALL_RUNTIME_DIR bin)
@@ -167,6 +167,10 @@ if(ITK_WRAP_PYTHON OR ITK_WRAP_JAVA OR ITK_WRAP_RUBY OR ITK_WRAP_PERL OR ITK_WRA
 else()
   set(ITK_WRAPPING OFF CACHE INTERNAL "Build external languages support" FORCE)
 endif()
+# Enable BridgeNumPy by default when Python wrapping is enabled
+if(ITK_WRAP_PYTHON AND NOT DEFINED Module_BridgeNumPy)
+  set(Module_BridgeNumPy ON CACHE BOOL "Enable the BridgeNumPy module.")
+endif()
 
 include(ITKSetStandardCompilerFlags)
 #---------------------------------------------------------------
@@ -192,11 +196,8 @@ endif()
 if(NOT CMAKE_ARCHIVE_OUTPUT_DIRECTORY)
   set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${ITK_BINARY_DIR}/lib)
 endif()
-
 set(ITK_MODULES_DIR "${ITK_BINARY_DIR}/${ITK_INSTALL_PACKAGE_DIR}/Modules")
-# Remove previously configured ITK module directory to keep the
-# enabled modules synchronized.
-file(REMOVE_RECURSE "${ITK_MODULES_DIR}")
+
 
 #-----------------------------------------------------------------------------
 # Provide compatibility options.

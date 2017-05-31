@@ -22,8 +22,7 @@
 
 int itkGaborKernelFunctionTest( int itkNotUsed( argc ), char * itkNotUsed( argv )[] )
 {
-
-  typedef itk::GaborKernelFunction<double> KernelFunctionType;
+  typedef itk::GaborKernelFunction< double > KernelFunctionType;
   KernelFunctionType::Pointer gabor = KernelFunctionType::New();
 
   EXERCISE_BASIC_OBJECT_METHODS( gabor, GaborKernelFunction,
@@ -48,8 +47,37 @@ int itkGaborKernelFunctionTest( int itkNotUsed( argc ), char * itkNotUsed( argv 
   gabor->CalculateImaginaryPartOn();
   TEST_SET_GET_VALUE( true, gabor->GetCalculateImaginaryPart() );
 
+  double tolerance = 1e-12;
+  double point = 2.86;
+  double expectedValue = -0.13297125073713259;
+  double result = gabor->Evaluate( point );
+  if( !itk::Math::FloatAlmostEqual( expectedValue, result, 10, tolerance ) )
+    {
+    std::cout.precision( static_cast< int >( itk::Math::abs( std::log10( tolerance ) ) ) );
+    std::cout << "Error in point " << point << ": ";
+    std::cout << "Expected: " << expectedValue << ", differs from: "
+      << result << std::endl;
+    std::cerr << " by more than " << tolerance << std::endl;
+    std::cout << "Test failed" << std::endl;
+    return EXIT_FAILURE;
+    }
+
   gabor->CalculateImaginaryPartOff();
   TEST_SET_GET_VALUE( false, gabor->GetCalculateImaginaryPart() );
 
+  expectedValue = 0.093234196962237226;
+  result = gabor->Evaluate( point );
+  if( !itk::Math::FloatAlmostEqual( expectedValue, result, 10, tolerance ) )
+    {
+    std::cout.precision( static_cast< int >( itk::Math::abs( std::log10( tolerance ) ) ) );
+    std::cout << "Error in point " << point << ": ";
+    std::cout << "Expected: " << expectedValue << ", differs from: "
+      << result << std::endl;
+    std::cerr << " by more than " << tolerance << std::endl;
+    std::cout << "Test failed" << std::endl;
+    return EXIT_FAILURE;
+    }
+
+  std::cout << "Test finished" << std::endl;
   return EXIT_SUCCESS;
 }

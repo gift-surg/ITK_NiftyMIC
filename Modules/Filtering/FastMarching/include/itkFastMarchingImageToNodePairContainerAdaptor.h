@@ -147,12 +147,12 @@ protected:
     const OutputPixelType& iValue );
 
 private:
-
-  FastMarchingImageToNodePairContainerAdaptor( const Self& );
-  void operator = ( const Self& );
-
+  ITK_DISALLOW_COPY_AND_ASSIGN(FastMarchingImageToNodePairContainerAdaptor);
   };
 }
 
+#ifndef ITK_MANUAL_INSTANTIATION
 #include "itkFastMarchingImageToNodePairContainerAdaptor.hxx"
+#endif
+
 #endif // itkFastMarchingImageToNodePairContainerAdaptor_h

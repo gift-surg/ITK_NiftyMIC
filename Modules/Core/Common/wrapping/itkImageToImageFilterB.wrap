@@ -3,12 +3,12 @@ itk_wrap_class("itk::ImageToImageFilter" POINTER)
   itk_wrap_image_filter("${WRAP_ITK_COMPLEX_REAL}" 2)
 
   # scalar <-> RGB
-  UNIQUE(stypes "UL;${WRAP_ITK_SCALAR}")
+  UNIQUE(stypes "${ITKM_IT};UL;${WRAP_ITK_SCALAR}")
   itk_wrap_image_filter_combinations("${stypes}" "${WRAP_ITK_RGB}")
   itk_wrap_image_filter_combinations("${WRAP_ITK_RGB}" "${stypes}")
 
   # scalar <-> RGBA
-  UNIQUE(stypes "UL;${WRAP_ITK_SCALAR}")
+  UNIQUE(stypes "${ITKM_IT};UL;${WRAP_ITK_SCALAR}")
   itk_wrap_image_filter_combinations("${stypes}" "${WRAP_ITK_RGBA}")
   itk_wrap_image_filter_combinations("${WRAP_ITK_RGBA}" "${stypes}")
 
@@ -50,12 +50,16 @@ itk_wrap_class("itk::ImageToImageFilter" POINTER)
     endforeach()
   endforeach()
 
-  # Real <-> CovariantVector
-  itk_wrap_include("itkCovariantVector.h")
-  foreach(d ${ITK_WRAP_IMAGE_DIMS})
-    itk_wrap_template("I${ITKM_F}${d}ICV${ITKM_D}${d}${d}"
-                      "itk::Image<${ITKT_F}, ${d}>, itk::Image<itk::CovariantVector<${ITKT_D}, ${d}>, ${d}>")
-  endforeach()
+  list(FIND WRAP_ITK_COV_VECTOR_REAL "CVD" index)
+  if(index EQUAL -1)
+    # Real <-> CovariantVector
+    itk_wrap_include("itkCovariantVector.h")
+    foreach(d ${ITK_WRAP_IMAGE_DIMS})
+      itk_wrap_template("I${ITKM_F}${d}ICV${ITKM_D}${d}${d}"
+                        "itk::Image<${ITKT_F}, ${d}>, itk::Image<itk::CovariantVector<${ITKT_D}, ${d}>, ${d}>")
+    endforeach()
+  endif()
+
   # Used in GradientEuler3DTransformImageFilter
   itk_wrap_template("I${ITKM_D}3ICV${ITKM_D}183"
                       "itk::Image<${ITKT_D}, 3>, itk::Image<itk::CovariantVector<${ITKT_D}, 18>, 3>")

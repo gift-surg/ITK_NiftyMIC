@@ -73,7 +73,8 @@ public:
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(PatchBasedDenoisingImageFilter, ImageToImageFilter);
+  itkTypeMacro(PatchBasedDenoisingImageFilter,
+    PatchBasedDenoisingBaseImageFilter);
 
   /** Type definition for the input image. */
   typedef typename Superclass::InputImageType  InputImageType;
@@ -206,6 +207,9 @@ public:
   itkSetObjectMacro(Sampler, BaseSamplerType);
   itkGetModifiableObjectMacro(Sampler, BaseSamplerType);
 
+  /** Get the number of independent components of the input. */
+  itkGetConstMacro(NumIndependentComponents, unsigned int);
+
 protected:
   PatchBasedDenoisingImageFilter();
   ~PatchBasedDenoisingImageFilter();
@@ -280,7 +284,7 @@ protected:
 
   void ComputeMinMax(const Image< DiffusionTensor3D<PixelValueType> , ImageDimension>* img)
   {
-    if (this->m_ComponentSpace == Superclass::RIEMANNIAN)
+    if( this->GetComponentSpace() == Superclass::RIEMANNIAN )
       {
       DispatchedRiemannianMinMax(img);
       }
@@ -325,7 +329,7 @@ protected:
                                                EigenVectorsCacheType& eigenVecsCache,
                                                RealType& diff, RealArrayType& norm)
   {
-    if (this->m_ComponentSpace == Superclass::RIEMANNIAN)
+    if( this->GetComponentSpace() == Superclass::RIEMANNIAN )
       {
       ComputeLogMapAndWeightedSquaredGeodesicDifference(a, b, weight,
                                                         useCachedComputations, cacheIndex,
@@ -358,12 +362,12 @@ protected:
   }
 
   /**
-   * Update a by adding b.  In Riemannian space, b is in the tangent space of a.
+   * Update a by adding b. In Riemannian space, b is in the tangent space of a.
    */
   RealType AddUpdate(const DiffusionTensor3D<RealValueType>& a,
                      const RealType& b)
   {
-    if (this->m_ComponentSpace == Superclass::RIEMANNIAN)
+    if( this->GetComponentSpace() == Superclass::RIEMANNIAN )
       {
       return this->AddExponentialMapUpdate(a, b);
       }
@@ -423,41 +427,6 @@ protected:
   virtual void SetThreadData(int threadId, const ThreadDataStruct& data);
 
   virtual ThreadDataStruct GetThreadData(int threadId);
-
-  std::vector<ThreadDataStruct> m_ThreadData;
-
-  /** The buffer that holds the updates for an iteration of the algorithm. */
-  typename OutputImageType::Pointer m_UpdateBuffer;
-
-  unsigned int m_NumPixelComponents;
-  unsigned int m_NumIndependentComponents;
-  unsigned int m_TotalNumberPixels;
-  //
-  bool m_UseSmoothDiscPatchWeights;
-  //
-  bool m_UseFastTensorComputations;
-  //
-  RealArrayType  m_KernelBandwidthSigma;
-  bool           m_KernelBandwidthSigmaIsSet;
-  RealArrayType  m_IntensityRescaleInvFactor;
-  PixelType      m_ZeroPixel;
-  PixelArrayType m_ImageMin;
-  PixelArrayType m_ImageMax;
-  double         m_KernelBandwidthFractionPixelsForEstimation;
-  bool           m_ComputeConditionalDerivatives;
-  double         m_MinSigma;
-  double         m_MinProbability;
-  unsigned int   m_SigmaUpdateDecimationFactor;
-  double         m_SigmaUpdateConvergenceTolerance;
-  ShortArrayType m_SigmaConverged;
-  double         m_KernelBandwidthMultiplicationFactor;
-  //
-  RealType m_NoiseSigma;
-  RealType m_NoiseSigmaSquared;
-  bool     m_NoiseSigmaIsSet;
-  //
-  BaseSamplerPointer                m_Sampler;
-  typename ListAdaptorType::Pointer m_SearchSpaceList;
 
 private:
   ITK_DISALLOW_COPY_AND_ASSIGN(PatchBasedDenoisingImageFilter);
@@ -532,12 +501,45 @@ private:
     InputImageType *Img;
     };
 
-};  // end class PatchBasedDenoisingImageFilter
+  std::vector<ThreadDataStruct> m_ThreadData;
 
+  /** The buffer that holds the updates for an iteration of the algorithm. */
+  typename OutputImageType::Pointer m_UpdateBuffer;
+
+  unsigned int m_NumPixelComponents;
+  unsigned int m_NumIndependentComponents;
+  unsigned int m_TotalNumberPixels;
+
+  bool m_UseSmoothDiscPatchWeights;
+
+  bool m_UseFastTensorComputations;
+
+  RealArrayType  m_KernelBandwidthSigma;
+  bool           m_KernelBandwidthSigmaIsSet;
+  RealArrayType  m_IntensityRescaleInvFactor;
+  PixelType      m_ZeroPixel;
+  PixelArrayType m_ImageMin;
+  PixelArrayType m_ImageMax;
+  double         m_KernelBandwidthFractionPixelsForEstimation;
+  bool           m_ComputeConditionalDerivatives;
+  double         m_MinSigma;
+  double         m_MinProbability;
+  unsigned int   m_SigmaUpdateDecimationFactor;
+  double         m_SigmaUpdateConvergenceTolerance;
+  ShortArrayType m_SigmaConverged;
+  double         m_KernelBandwidthMultiplicationFactor;
+
+  RealType m_NoiseSigma;
+  RealType m_NoiseSigmaSquared;
+  bool     m_NoiseSigmaIsSet;
+
+  BaseSamplerPointer                m_Sampler;
+  typename ListAdaptorType::Pointer m_SearchSpaceList;
+};
 } // end namespace itk
 
 #ifndef ITK_MANUAL_INSTANTIATION
-# include "itkPatchBasedDenoisingImageFilter.hxx"
+#include "itkPatchBasedDenoisingImageFilter.hxx"
 #endif
 
 #endif

@@ -22,7 +22,8 @@
 #include "itkHistogramThresholdImageFilter.h"
 #include "itkIntermodesThresholdCalculator.h"
 
-namespace itk {
+namespace itk
+{
 
 /** \class IntermodesThresholdImageFilter
  * \brief Threshold an image using the Intermodes Threshold
@@ -30,7 +31,7 @@ namespace itk {
  * This filter creates a binary thresholded image that separates an
  * image into foreground and background components. The filter
  * computes the threshold using the IntermodesThresholdCalculator and
- * applies that theshold to the input image using the
+ * applies that threshold to the input image using the
  * BinaryThresholdImageFilter.
  *
  * \author Richard Beare. Department of Medicine, Monash University,
@@ -90,21 +91,21 @@ public:
   typedef typename Superclass::HistogramType                             HistogramType;
   typedef IntermodesThresholdCalculator< HistogramType, InputPixelType > CalculatorType;
 
-  void SetMaximumSmoothingIterations(unsigned long I)
+  void SetMaximumSmoothingIterations(SizeValueType maxSmoothingIterations)
   {
-    m_IntermodesCalculator->SetMaximumSmoothingIterations(I);
+    m_IntermodesCalculator->SetMaximumSmoothingIterations(maxSmoothingIterations);
   }
 
-  unsigned long GetMaximumSmoothingIterations()
+  SizeValueType GetMaximumSmoothingIterations()
   {
     return(m_IntermodesCalculator->GetMaximumSmoothingIterations());
   }
 
-  /** select whether midpoint (intermode=true) or minimum between
-     peaks is used */
-  void SetUseInterMode(unsigned long I)
+  /** Select whether midpoint (intermode=true) or minimum between
+     peaks is used. */
+  void SetUseInterMode(bool useIntermode)
   {
-    m_IntermodesCalculator->SetUseInterMode(I);
+    m_IntermodesCalculator->SetUseInterMode(useIntermode);
   }
 
   bool GetUseInterMode()
@@ -132,8 +133,8 @@ protected:
   void PrintSelf(std::ostream & os, Indent indent) const ITK_OVERRIDE
     {
     Superclass::PrintSelf(os, indent);
-    os << indent << "MaximumSmoothingIterations: " << m_IntermodesCalculator->GetMaximumSmoothingIterations() << std::endl;
-    os << indent << "UseInterMode: " << m_IntermodesCalculator->GetUseInterMode() << std::endl;
+
+    itkPrintSelfObjectMacro( IntermodesCalculator );
     }
 
 private:
@@ -141,7 +142,7 @@ private:
 
   typename CalculatorType::Pointer m_IntermodesCalculator;
 
-}; // end of class
+};
 
 } // end namespace itk
 

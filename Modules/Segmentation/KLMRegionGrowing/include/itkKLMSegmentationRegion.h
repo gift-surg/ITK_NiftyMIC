@@ -66,7 +66,7 @@ namespace itk
  *   a & a & a & b & b & b & c & c & c \\ \hline
  *  \end{tabular}\f]
  *
- * Region borders are shown as ``E''.
+ * Region borders are shown as "E".
  * \f[\begin{tabular}{|c|c|c|c|c|c|c|c|c|c|c|}
  * \hline
  *   C & C & C &   & C & C & C &   & C & C & C \\ \hline
@@ -85,7 +85,9 @@ namespace itk
  * \ingroup RegionGrowingSegmentation
  * \ingroup ITKKLMRegionGrowing
  */
-class KLMSegmentationBorder;
+
+// Forward reference because of circular dependencies
+class ITK_FORWARD_EXPORT KLMSegmentationBorder;
 
 class ITKKLMRegionGrowing_EXPORT KLMSegmentationRegion:public SegmentationRegion
 {

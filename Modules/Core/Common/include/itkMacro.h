@@ -188,6 +188,22 @@ namespace itk
   #endif
 #endif
 
+// Setup symbol exports
+#ifdef ITK_TEMPLATE_VISIBILITY_DEFAULT
+  #define ITK_FORCE_EXPORT_MACRO(moduleName) __attribute__ ((visibility ("default")))
+#else
+  #define ITK_FORCE_EXPORT_MACRO(moduleName) moduleName ## _EXPORT
+#endif
+
+#ifndef ITK_FORWARD_EXPORT
+  // If build with shared libraries, on MacOS, if USE_COMPILER_HIDDEN_VISIBILITY is ON
+  #if defined(ITK_TEMPLATE_VISIBILITY_DEFAULT) && defined(ITK_BUILD_SHARED_LIBS) && defined(USE_COMPILER_HIDDEN_VISIBILITY)
+    #define ITK_FORWARD_EXPORT __attribute__ ((visibility ("default")))
+  #else
+    #define ITK_FORWARD_EXPORT
+  #endif
+#endif
+
 #if ITK_COMPILED_CXX_STANDARD_VERSION >= 201103L
   #define ITK_HAS_CXX11_RVREF
 #endif
@@ -228,7 +244,11 @@ namespace itk
 
 // Use "ITK_FALLTHROUGH;" to annotate deliberate fall-through in switches,
 // use it analogously to "break;".  The trailing semi-colon is required.
-#if ITK_COMPILED_CXX_STANDARD_VERSION >= 201103L && defined(__has_warning)
+#if defined( __GNUC__ ) && !defined( __INTEL_COMPILER )
+# if ( __GNUC__ >= 7 )
+#  define ITK_FALLTHROUGH __attribute__((fallthrough))
+# endif
+#elif ITK_COMPILED_CXX_STANDARD_VERSION >= 201103L && defined(__has_warning)
 # if __has_feature(cxx_attributes) && __has_warning("-Wimplicit-fallthrough")
 #  define ITK_FALLTHROUGH [[clang::fallthrough]]
 # endif

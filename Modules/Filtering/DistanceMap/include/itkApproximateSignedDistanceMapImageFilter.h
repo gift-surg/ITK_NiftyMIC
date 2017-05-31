@@ -55,7 +55,7 @@ namespace itk
  * an extra iteration through the image is required.
  *
  * This filter uses the FastChamferDistanceImageFilter and the
- * IsoContourDistanceImageFilter inernally to perform the distance calculations.
+ * IsoContourDistanceImageFilter internally to perform the distance calculations.
  *
  * \sa DanielssonDistanceMapImageFilter
  * \sa SignedDanielssonDistanceMapImageFilter
@@ -67,7 +67,7 @@ namespace itk
  * \ingroup ITKDistanceMap
  *
  * \wiki
- * \wikiexample{ImageProcessing/ApproximateSignedDistanceMapImageFilter,Compute a distance map from objects in a binary image}
+ * \wikiexample{ImageProcessing/ApproximateSignedDistanceMapImageFilter, Compute a distance map from objects in a binary image}
  * \endwiki
  */
 
@@ -112,12 +112,12 @@ public:
   /** Pointer Type for the output image. */
   typedef typename OutputImageType::Pointer OutputImagePointer;
 
-  /** Set/Get intensity value representing the interior of objects in the mask
+  /** Set/Get intensity value representing the interior of objects in the mask.
     */
   itkSetMacro(InsideValue, InputPixelType);
   itkGetConstMacro(InsideValue, InputPixelType);
 
-  /** Set/Get intensity value representing non-objects in the mask */
+  /** Set/Get intensity value representing non-objects in the mask. */
   itkSetMacro(OutsideValue, InputPixelType);
   itkGetConstMacro(OutsideValue, InputPixelType);
 

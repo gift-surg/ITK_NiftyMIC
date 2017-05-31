@@ -12,7 +12,11 @@ itkGrayscaleFunctionErodeImageFilterTest.cxx
 itkGrayscaleMorphologicalClosingImageFilterTest.cxx
 itkGrayscaleMorphologicalOpeningImageFilterTest.cxx
 itkGrayscaleGeodesicErodeDilateImageFilterTest.cxx
+itkHConcaveImageFilterTest.cxx
+itkHConvexImageFilterTest.cxx
 itkHConvexConcaveImageFilterTest.cxx
+itkHMaximaImageFilterTest.cxx
+itkHMinimaImageFilterTest.cxx
 itkHMaximaMinimaImageFilterTest.cxx
 itkMorphologicalGradientImageFilterTest.cxx
 itkOpeningByReconstructionImageFilterTest.cxx
@@ -31,6 +35,10 @@ itkGrayscaleErodeImageFilterTest.cxx
 itkGrayscaleMorphologicalClosingImageFilterTest2.cxx
 itkGrayscaleMorphologicalOpeningImageFilterTest2.cxx
 itkMorphologicalGradientImageFilterTest2.cxx
+itkRegionalMaximaImageFilterTest.cxx
+itkRegionalMinimaImageFilterTest.cxx
+itkValuedRegionalMaximaImageFilterTest.cxx
+itkValuedRegionalMinimaImageFilterTest.cxx
 )
 
 CreateTestDriver(ITKMathematicalMorphology  "${ITKMathematicalMorphology-Test_LIBRARIES}" "${ITKMathematicalMorphologyTests}")
@@ -119,11 +127,51 @@ itk_add_test(NAME itkGrayscaleGeodesicErodeDilateImageFilterTest
     --compare DATA{${ITK_DATA_ROOT}/Baseline/BasicFilters/HMaximaMinimaImageFilterTest.png}
               ${ITK_TEST_OUTPUT_DIR}/itkGrayscaleGeodesicErodeDilateImageFilterTest.png
     itkGrayscaleGeodesicErodeDilateImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cake_easy.png} ${ITK_TEST_OUTPUT_DIR}/itkGrayscaleGeodesicErodeDilateImageFilterTest.png 35)
+itk_add_test(NAME itkHConcaveImageFilterTestFullyConnectedOff
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHConcaveImageFilterTestFullyConnectedOff.png
+                  bd1b5ab47f54cd97b5c6b454bee130e2
+    itkHConcaveImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHConcaveImageFilterTestFullyConnectedOff.png 2000 0)
+itk_add_test(NAME itkHConcaveImageFilterTestFullyConnectedOn
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHConcaveImageFilterTestFullyConnectedOn.png
+                  c7116406ded975955965226f6a69e28d
+    itkHConcaveImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHConcaveImageFilterTestFullyConnectedOn.png 2000 1)
+itk_add_test(NAME itkHConvexImageFilterTestFullyConnectedOff
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHConvexImageFilterTestFullyConnectedOff.png
+                  d77fb8b2aeac6f302cc2582e12831eb4
+    itkHConvexImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHConvexImageFilterTestFullyConnectedOff.png 2000 0)
+itk_add_test(NAME itkHConvexImageFilterTestFullyConnectedOn
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHConvexImageFilterTestFullyConnectedOn.png
+                  d8b22af69787337021748e00f82bc100
+    itkHConvexImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHConvexImageFilterTestFullyConnectedOn.png 2000 1)
 itk_add_test(NAME itkHConvexConcaveImageFilterTest
       COMMAND ITKMathematicalMorphologyTestDriver
     --compare DATA{${ITK_DATA_ROOT}/Baseline/BasicFilters/HConvexConcaveImageFilterTest.png}
               ${ITK_TEST_OUTPUT_DIR}/HConvexConcaveImageFilterTest.png
     itkHConvexConcaveImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/HConvexConcaveImageFilterTest.png 50)
+itk_add_test(NAME itkHMaximaImageFilterTestFullyConnectedOff
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHMaximaImageFilterTestFullyConnectedOff.png
+                  9e2e9272501fa665b0622329dc70b121
+    itkHMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHMaximaImageFilterTestFullyConnectedOff.png 2000 0)
+itk_add_test(NAME itkHMaximaImageFilterTestFullyConnectedOn
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHMaximaImageFilterTestFullyConnectedOn.png
+                  934b9aec16da6cc9171a3074cbf9f242
+    itkHMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHMaximaImageFilterTestFullyConnectedOn.png 2000 1)
+itk_add_test(NAME itkHMinimaImageFilterTestFullyConnectedOff
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHMinimaImageFilterTestFullyConnectedOff.png
+                  9e2e9272501fa665b0622329dc70b121
+    itkHMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHMinimaImageFilterTestFullyConnectedOff.png 2000 0)
+itk_add_test(NAME itkHMinimaImageFilterTestFullyConnectedOn
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare-MD5 ${ITK_TEST_OUTPUT_DIR}/itkHMinimaImageFilterTestFullyConnectedOn.png
+                  69e285fb1db3f8f83a0b6469b4f24f7f
+    itkHMinimaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/Input-RA-Short.nrrd} ${ITK_TEST_OUTPUT_DIR}/itkHMinimaImageFilterTestFullyConnectedOn.png 2000 1)
 itk_add_test(NAME itkHMaximaMinimaImageFilterTest
       COMMAND ITKMathematicalMorphologyTestDriver
     --compare DATA{${ITK_DATA_ROOT}/Baseline/BasicFilters/HMaximaMinimaImageFilterTest.png}
@@ -381,3 +429,45 @@ itk_add_test(NAME itkMapGrayscaleErodeImageFilterTest
   ${ITK_TEST_OUTPUT_DIR}/itkMapGrayscaleErodeImageFilterTestVHGW.png
   ${ITK_TEST_OUTPUT_DIR}/itkMapGrayscaleErodeImageFilterTestAnchor.png
 )
+itk_add_test(NAME itkRegionalMinimaImageFilterTest1
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1RegionalMinimal-ref1.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal1.png
+    itkRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal1.png ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal-ref1.png 2 1 1)
+itk_add_test(NAME itkRegionalMinimaImageFilterTest2
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1RegionalMinimal-ref2.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal2.png
+    itkRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal2.png ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMinimal-ref2.png 2 0 1)
+
+itk_add_test(NAME itkRegionalMaximaImageFilterTest1
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1RegionalMaximal-ref1.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal1.png
+    itkRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal1.png ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal-ref1.png 2 1 1)
+itk_add_test(NAME itkRegionalMaximaImageFilterTest2
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1RegionalMaximal-ref2.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal2.png
+    itkRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal2.png ${ITK_TEST_OUTPUT_DIR}/cthead1RegionalMaximal-ref2.png 2 0 1)
+
+itk_add_test(NAME itkValuedRegionalMaximaImageFilterTest
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1ValuedRegionalMaximal-ref.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal.png
+    itkValuedRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal-ref.png 1)
+itk_add_test(NAME itkValuedRegionalMaximaImageFilterTest2
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1ValuedRegionalMaximal-ref2.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal2.png
+    itkValuedRegionalMaximaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal2.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMaximal-ref2.png 0)
+itk_add_test(NAME itkValuedRegionalMinimaImageFilterTest
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1ValuedRegionalMinimal-ref.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal.png
+    itkValuedRegionalMinimaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal-ref.png 1)
+itk_add_test(NAME itkValuedRegionalMinimaImageFilterTest2
+      COMMAND ITKMathematicalMorphologyTestDriver
+    --compare DATA{Baseline/cthead1ValuedRegionalMinimal-ref2.png}
+              ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal2.png
+    itkValuedRegionalMinimaImageFilterTest DATA{${ITK_DATA_ROOT}/Input/cthead1.png} ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal2.png ${ITK_TEST_OUTPUT_DIR}/cthead1ValuedRegionalMinimal-ref2.png 0)

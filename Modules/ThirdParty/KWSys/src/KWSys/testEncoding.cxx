@@ -9,6 +9,7 @@
 #include KWSYS_HEADER(Encoding.hxx)
 #include KWSYS_HEADER(Encoding.h)
 
+#include <algorithm>
 #include <iostream>
 #include <locale.h>
 #include <stdlib.h>
@@ -124,6 +125,35 @@ static int testRobustEncoding()
   return ret;
 }
 
+static int testWithNulls()
+{
+  int ret = 0;
+  std::vector<std::string> strings;
+  strings.push_back(std::string("ab") + '\0' + 'c');
+  strings.push_back(std::string("d") + '\0' + '\0' + 'e');
+  strings.push_back(std::string() + '\0' + 'f');
+  strings.push_back(std::string() + '\0' + '\0' + "gh");
+  strings.push_back(std::string("ij") + '\0');
+  strings.push_back(std::string("k") + '\0' + '\0');
+  strings.push_back(std::string("\0\0\0\0", 4) + "lmn" +
+                    std::string("\0\0\0\0", 4));
+  for (std::vector<std::string>::iterator it = strings.begin();
+       it != strings.end(); ++it) {
+    std::wstring wstr = kwsys::Encoding::ToWide(*it);
+    std::string str = kwsys::Encoding::ToNarrow(wstr);
+    std::string s(*it);
+    std::replace(s.begin(), s.end(), '\0', ' ');
+    std::cout << "'" << s << "' (" << it->size() << ")" << std::endl;
+    if (str != *it) {
+      std::replace(str.begin(), str.end(), '\0', ' ');
+      std::cout << "string with null was different: '" << str << "' ("
+                << str.size() << ")" << std::endl;
+      ret++;
+    }
+  }
+  return ret;
+}
+
 static int testCommandLineArguments()
 {
   int status = 0;
@@ -150,6 +180,88 @@ static int testCommandLineArguments()
   return status;
 }
 
+static int testToWindowsExtendedPath()
+{
+#ifdef _WIN32
+  int ret = 0;
+  if (kwsys::Encoding::ToWindowsExtendedPath(
+        "L:\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") !=
+      L"\\\\?\\L:\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"L:\\Local Mojo\\Hex Power Pack\\Iffy Voodoo\""
+              << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath(
+        "L:/Local Mojo/Hex Power Pack/Iffy Voodoo") !=
+      L"\\\\?\\L:\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"L:/Local Mojo/Hex Power Pack/Iffy Voodoo\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath(
+        "\\\\Foo\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") !=
+      L"\\\\?\\UNC\\Foo\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"\\\\Foo\\Local Mojo\\Hex Power Pack\\Iffy Voodoo\""
+              << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath(
+        "//Foo/Local Mojo/Hex Power Pack/Iffy Voodoo") !=
+      L"\\\\?\\UNC\\Foo\\Local Mojo\\Hex Power Pack\\Iffy Voodoo") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"//Foo/Local Mojo/Hex Power Pack/Iffy Voodoo\""
+              << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("//") != L"//") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"//\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("\\\\.\\") != L"\\\\.\\") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"\\\\.\\\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("\\\\.\\X") != L"\\\\.\\X") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"\\\\.\\X\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("\\\\.\\X:") != L"\\\\?\\X:") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"\\\\.\\X:\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("\\\\.\\X:\\") !=
+      L"\\\\?\\X:\\") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"\\\\.\\X:\\\"" << std::endl;
+    ++ret;
+  }
+
+  if (kwsys::Encoding::ToWindowsExtendedPath("NUL") != L"\\\\.\\NUL") {
+    std::cout << "Problem with ToWindowsExtendedPath "
+              << "\"NUL\"" << std::endl;
+    ++ret;
+  }
+
+  return ret;
+#else
+  return 0;
+#endif
+}
+
 //----------------------------------------------------------------------------
 int testEncoding(int, char* [])
 {
@@ -165,6 +277,8 @@ int testEncoding(int, char* [])
   ret |= testHelloWorldEncoding();
   ret |= testRobustEncoding();
   ret |= testCommandLineArguments();
+  ret |= testWithNulls();
+  ret |= testToWindowsExtendedPath();
 
   return ret;
 }

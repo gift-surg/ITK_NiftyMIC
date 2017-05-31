@@ -22,7 +22,8 @@
 #include "itkHistogramThresholdImageFilter.h"
 #include "itkYenThresholdCalculator.h"
 
-namespace itk {
+namespace itk
+{
 
 /** \class YenThresholdImageFilter
  * \brief Threshold an image using the Yen Threshold
@@ -30,7 +31,7 @@ namespace itk {
  * This filter creates a binary thresholded image that separates an
  * image into foreground and background components. The filter
  * computes the threshold using the YenThresholdCalculator and
- * applies that theshold to the input image using the
+ * applies that threshold to the input image using the
  * BinaryThresholdImageFilter.
  *
  * \author Richard Beare
@@ -105,7 +106,7 @@ protected:
 
 private:
   ITK_DISALLOW_COPY_AND_ASSIGN(YenThresholdImageFilter);
-}; // end of class
+};
 
 } // end namespace itk
 

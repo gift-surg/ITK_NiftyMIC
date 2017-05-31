@@ -53,16 +53,16 @@ class ITK_TEMPLATE_EXPORT HuangThresholdCalculator : public HistogramThresholdCa
 {
 public:
   /** Standard class typedefs. */
-  typedef HuangThresholdCalculator        Self;
-  typedef Object                          Superclass;
-  typedef SmartPointer<Self>              Pointer;
-  typedef SmartPointer<const Self>        ConstPointer;
+  typedef HuangThresholdCalculator                          Self;
+  typedef HistogramThresholdCalculator<THistogram, TOutput> Superclass;
+  typedef SmartPointer<Self>                                Pointer;
+  typedef SmartPointer<const Self>                          ConstPointer;
 
   /** Method for creation through the object factory. */
   itkNewMacro(Self);
 
   /** Run-time type information (and related methods). */
-  itkTypeMacro(HuangThresholdCalculator, Object);
+  itkTypeMacro(HuangThresholdCalculator, HistogramThresholdCalculator);
 
   /** Type definition for the input image. */
   typedef THistogram  HistogramType;
@@ -72,6 +72,8 @@ protected:
   HuangThresholdCalculator() { m_FirstBin = 0; m_LastBin = 0; m_Size = 0; }
   virtual ~HuangThresholdCalculator() {}
   void GenerateData(void) ITK_OVERRIDE;
+
+  void PrintSelf(std::ostream& os, Indent indent) const ITK_OVERRIDE;
 
   typedef typename HistogramType::TotalAbsoluteFrequencyType  TotalAbsoluteFrequencyType;
   typedef typename HistogramType::AbsoluteFrequencyType       AbsoluteFrequencyType;

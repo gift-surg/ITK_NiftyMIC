@@ -129,6 +129,7 @@ itkPeriodicBoundaryConditionTest.cxx
 itkSmartPointerTest.cxx
 itkBarrierTest.cxx
 itkVariableSizeMatrixTest.cxx
+itkConicShellInteriorExteriorSpatialFunctionTest.cxx
 itkEllipsoidInteriorExteriorSpatialFunctionTest.cxx
 itkFrustumSpatialFunctionTest.cxx
 itkTorusInteriorExteriorSpatialFunctionTest.cxx
@@ -242,10 +243,14 @@ itk_add_test(NAME itkFloodFilledSpatialFunctionTest COMMAND ITKCommon1TestDriver
 itk_add_test(NAME itkFloodFillIteratorTest COMMAND ITKCommon1TestDriver itkFloodFillIteratorTest)
 itk_add_test(NAME itkAnnulusOperatorTest COMMAND ITKCommon1TestDriver itkAnnulusOperatorTest)
 
-itk_add_test(NAME itkColorTableTest COMMAND
-             ITKCommon1TestDriver --redirectOutput ${TEMP}/itkColorTableTest.txt
-             itkColorTableTest)
-set_tests_properties(itkColorTableTest PROPERTIES ATTACHED_FILES_ON_FAIL ${TEMP}/itkColorTableTest.txt)
+itk_add_test(NAME itkColorTableTest1 COMMAND
+             ITKCommon1TestDriver --redirectOutput ${TEMP}/itkColorTableTest1.txt
+             itkColorTableTest 8)
+set_tests_properties(itkColorTableTest1 PROPERTIES ATTACHED_FILES_ON_FAIL ${TEMP}/itkColorTableTest1.txt)
+itk_add_test(NAME itkColorTableTest2 COMMAND
+             ITKCommon1TestDriver --redirectOutput ${TEMP}/itkColorTableTest2.txt
+             itkColorTableTest 16)
+set_tests_properties(itkColorTableTest2 PROPERTIES ATTACHED_FILES_ON_FAIL ${TEMP}/itkColorTableTest2.txt)
 
 itk_add_test(NAME itkDirectoryTest COMMAND ITKCommon1TestDriver itkDirectoryTest ${TEMP})
 itk_add_test(NAME itkDerivativeOperatorTest COMMAND ITKCommon1TestDriver itkDerivativeOperatorTest)
@@ -298,7 +303,12 @@ itk_add_test(NAME itkModifiedTimeTest
 itk_add_test(NAME itkExceptionObjectTest COMMAND ITKCommon1TestDriver itkExceptionObjectTest)
 itk_add_test(NAME itkFileOutputWindowTest COMMAND ITKCommon1TestDriver itkFileOutputWindowTest)
 itk_add_test(NAME itkFiniteCylinderSpatialFunctionTest COMMAND ITKCommon2TestDriver itkFiniteCylinderSpatialFunctionTest)
-itk_add_test(NAME itkGaussianSpatialFunctionTest COMMAND ITKCommon1TestDriver itkGaussianSpatialFunctionTest)
+itk_add_test(NAME itkGaussianSpatialFunctionTest1
+      COMMAND ITKCommon1TestDriver
+      itkGaussianSpatialFunctionTest 1.0 0)
+itk_add_test(NAME itkGaussianSpatialFunctionTest2
+      COMMAND ITKCommon1TestDriver
+      itkGaussianSpatialFunctionTest 19.0 1)
 itk_add_test(NAME itkCrossHelperTest COMMAND ITKCommon1TestDriver itkCrossHelperTest)
 itk_add_test(NAME itkImageIteratorTest COMMAND ITKCommon1TestDriver itkImageIteratorTest)
 itk_add_test(NAME itkImageIteratorWithIndexTest COMMAND ITKCommon1TestDriver itkImageIteratorWithIndexTest)
@@ -417,6 +427,7 @@ itk_add_test(NAME itkTimeProbesTest COMMAND ITKCommon2TestDriver itkTimeProbesTe
 itk_add_test(NAME itkTreeContainerTest COMMAND ITKCommon2TestDriver itkTreeContainerTest)
 itk_add_test(NAME itkTreeContainerTest2 COMMAND ITKCommon1TestDriver itkTreeContainerTest2)
 itk_add_test(NAME itkVersorTest COMMAND ITKCommon2TestDriver itkVersorTest)
+itk_add_test(NAME itkConicShellInteriorExteriorSpatialFunctionTest COMMAND ITKCommon2TestDriver itkConicShellInteriorExteriorSpatialFunctionTest)
 itk_add_test(NAME itkEllipsoidInteriorExteriorSpatialFunctionTest COMMAND ITKCommon2TestDriver itkEllipsoidInteriorExteriorSpatialFunctionTest)
 itk_add_test(NAME itkFrustumSpatialFunctionTest COMMAND ITKCommon2TestDriver itkFrustumSpatialFunctionTest)
 itk_add_test(NAME itkSymmetricEllipsoidInteriorExteriorSpatialFunctionTest COMMAND ITKCommon1TestDriver itkSymmetricEllipsoidInteriorExteriorSpatialFunctionTest)
@@ -530,7 +541,6 @@ if(ITK_BUILD_SHARED_LIBS AND ITK_DYNAMIC_LOADING)
     generate_export_header(ClientTestLibrary${_name}
       EXPORT_FILE_NAME ${ITKCommon_BINARY_DIR}/ClientTestLibrary${_name}Export.h
       EXPORT_MACRO_NAME ClientTestLibrary${_name}_EXPORT
-      TEMPLATE_EXPORT_MACRO_NAME ClientTestLibrary${_name}_TEMPLATE_EXPORT
       NO_EXPORT_MACRO_NAME ClientTestLibrary${_name}_HIDDEN
       )
     set_target_properties(ClientTestLibrary${_name} PROPERTIES CXX_VISIBILITY_PRESET hidden)

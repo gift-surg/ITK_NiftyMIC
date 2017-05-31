@@ -38,10 +38,13 @@ namespace itk
  * the value of the variables at the know points and on containing the
  * value of the variables at the trail points.
  *
- * Implemenation of this class is based on Chapter 11 of
+ * Implementation of this class is based on Chapter 11 of
  * "Level Set Methods and Fast Marching Methods", J.A. Sethian,
  * Cambridge Press, Second edition, 1999.
  *
+ * For an alternative implementation, see itk::FastMarchingExtensionImageFilterBase.
+ *
+ * \sa FastMarchingExtensionImageFilterBase
  * \sa FastMarchingImageFilter
  * \sa LevelSetTypeDefault
  * \sa AuxVarTypeDefault

@@ -38,7 +38,9 @@
 #include "itkSimpleFastMutexLock.h"
 #include "itkConceptChecking.h"
 
-#if defined(ITK_HAVE_SYNC_BUILTINS)
+#if ITK_COMPILER_CXX_ATOMIC
+# include <atomic>
+#elif defined(ITK_HAVE_SYNC_BUILTINS)
 # define ITK_GCC_ATOMICS_32
 # define ITK_GCC_ATOMICS_64
 #elif defined(__APPLE__)
@@ -63,8 +65,18 @@ namespace Detail
 template <size_t VSize> class AtomicOps;
 
 
-#if defined ITK_HAVE_SYNC_BUILTINS
+#if ITK_COMPILER_CXX_ATOMIC
 
+template <size_t VSize> struct BaseType;
+
+template <size_t VSize> class AtomicOps
+{
+public:
+  typedef typename BaseType<VSize>::Type AtomicType;
+  typedef typename BaseType<VSize>::Type ValueType;
+};
+
+#elif defined ITK_HAVE_SYNC_BUILTINS
 
 template <size_t VSize> struct BaseType;
 
@@ -119,7 +131,7 @@ public:
 
 #endif // defined ITK_HAVE_SYNC_BUILTINS
 
-#if defined(ITK_GCC_ATOMICS_64)
+#if defined(ITK_GCC_ATOMICS_64) || ITK_COMPILER_CXX_ATOMIC
 template<> struct BaseType<8>
 {
   itkAlignedTypedef( 8, int64_t, Type );
@@ -209,7 +221,7 @@ public:
 
 #endif
 
-#if defined(ITK_GCC_ATOMICS_32)
+#if defined(ITK_GCC_ATOMICS_32) || ITK_COMPILER_CXX_ATOMIC
 template<> struct BaseType<4>
 {
   itkAlignedTypedef( 4, int32_t, Type );

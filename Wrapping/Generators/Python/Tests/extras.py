@@ -64,6 +64,8 @@ except KeyError:
 # test ctype
 assert itk.ctype("unsigned short") == itk.US
 assert itk.ctype("        unsigned      \n   short \t  ") == itk.US
+assert itk.ctype("signed short") == itk.SS
+assert itk.ctype("short") == itk.SS
 try:
     itk.ctype("dummy")
     raise Exception("unknown C type should send an exception")
@@ -123,8 +125,15 @@ assert itk.range(reader.GetOutput()) == (0, 255)
 
 
 # test write
+itk.imwrite(reader, sys.argv[2])
 itk.write(reader, sys.argv[2])
-itk.write(reader, sys.argv[2], True)
+itk.imwrite(reader, sys.argv[2], True)
+
+# test read
+image=itk.imread(fileName)
+assert type(image) == itk.Image[itk.RGBPixel[itk.UC],2]
+image=itk.imread(fileName, itk.F)
+assert type(image) == itk.Image[itk.F,2]
 
 # test search
 res = itk.search("Index")
@@ -145,3 +154,47 @@ assert down_casted == reader
 assert down_casted.__class__ == ReaderType
 
 # pipeline, auto_pipeline and templated class are tested in other files
+
+# BridgeNumPy
+try:
+    # Images
+    import numpy
+    image = itk.imread(fileName)
+    arr = itk.GetArrayFromImage(image)
+    arr.fill(1)
+    assert numpy.any(arr != itk.GetArrayFromImage(image))
+    view = itk.GetArrayViewFromImage(image)
+    view.fill(1)
+    assert numpy.all(view == itk.GetArrayFromImage(image))
+    image = itk.GetImageFromArray(arr)
+    image.FillBuffer(2)
+    assert numpy.any(arr != itk.GetArrayFromImage(image))
+    image = itk.GetImageViewFromArray(arr)
+    image.FillBuffer(2)
+    assert numpy.all(arr == itk.GetArrayFromImage(image))
+    # VNL Vectors
+    v1 = itk.vnl_vector.D(2)
+    v1.fill(1)
+    v_np = itk.GetArrayFromVnlVector(v1)
+    assert v1.get(0) == v_np[0]
+    v_np[0] = 0
+    assert v1.get(0) != v_np[0]
+    view = itk.GetArrayViewFromVnlVector(v1)
+    assert v1.get(0) == view[0]
+    view[0] = 0
+    assert v1.get(0) == view[0]
+    # VNL Matrices
+    m1 = itk.vnl_matrix.D(2,2)
+    m1.fill(1)
+    m_np = itk.GetArrayFromVnlMatrix(m1)
+    assert m1.get(0,0) == m_np[0,0]
+    m_np[0,0] = 0
+    assert m1.get(0,0) != m_np[0,0]
+    view = itk.GetArrayViewFromVnlMatrix(m1)
+    assert m1.get(0,0) == view[0,0]
+    view[0,0] = 0
+    assert m1.get(0,0) == view[0,0]
+except ImportError:
+    print("NumPy not imported. Skipping BridgeNumPy tests")
+    # Numpy is not available, do not run the Bridge NumPy tests
+    pass

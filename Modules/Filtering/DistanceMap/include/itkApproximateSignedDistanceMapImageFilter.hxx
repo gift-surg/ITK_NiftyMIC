@@ -26,9 +26,7 @@
 
 namespace itk
 {
-/**
- * Default constructor.
- */
+
 template< typename TInputImage, typename TOutputImage >
 ApproximateSignedDistanceMapImageFilter< TInputImage, TOutputImage >
 ::ApproximateSignedDistanceMapImageFilter():
@@ -37,13 +35,8 @@ ApproximateSignedDistanceMapImageFilter< TInputImage, TOutputImage >
   m_InsideValue( NumericTraits< InputPixelType >::min() ),
   m_OutsideValue( NumericTraits< InputPixelType >::max() )
 {
-// I'm not setting any of the ReleaseDataFlag values for the mini-pipeline
-// filters. Should I be?
 }
 
-/**
- * Generate Data.
- */
 template< typename TInputImage, typename TOutputImage >
 void
 ApproximateSignedDistanceMapImageFilter< TInputImage, TOutputImage >
@@ -56,17 +49,17 @@ ApproximateSignedDistanceMapImageFilter< TInputImage, TOutputImage >
   typedef typename OutputImageType::RegionType OutputRegionType;
   OutputRegionType oRegion = output->GetRequestedRegion();
 
-  // calculate the largest possible distance in the output image.
+  // Calculate the largest possible distance in the output image.
   // this maximum is the distance from one corner of the image to the other.
   OutputSizeType      outputSize = oRegion.GetSize();
   OutputSizeValueType maximumDistance = 0;
 
-  for ( unsigned int i = 0; i < InputImageDimension; i++ )
+  for( unsigned int i = 0; i < InputImageDimension; i++ )
     {
     maximumDistance += outputSize[i] * outputSize[i];
     }
-  // cast to float and back because there's no sqrt defined for unsigned long
-  // double,
+
+  // Cast to double and back because there's no sqrt defined for unsigned long,
   // which is the general SizeValueType.
   maximumDistance =
     static_cast< OutputSizeValueType >( std::sqrt( static_cast< double >( maximumDistance ) ) );
@@ -80,44 +73,46 @@ ApproximateSignedDistanceMapImageFilter< TInputImage, TOutputImage >
   progress->RegisterInternalFilter(m_IsoContourFilter, 0.5f);
   progress->RegisterInternalFilter(m_ChamferFilter, 0.5f);
 
-  // set up the isocontour filter
+  // Set up the isocontour filter
   m_IsoContourFilter->SetInput( this->GetInput() );
   m_IsoContourFilter->SetFarValue(maximumDistance + 1);
   m_IsoContourFilter->SetNumberOfThreads( numberOfThreads );
-  InputPixelType levelSetValue = ( m_InsideValue + m_OutsideValue ) / 2;
+  typename IsoContourType::PixelRealType levelSetValue =
+    (static_cast<typename IsoContourType::PixelRealType>( m_InsideValue )
+    + static_cast<typename IsoContourType::PixelRealType>(m_OutsideValue) ) / 2.0;
   m_IsoContourFilter->SetLevelSetValue(levelSetValue);
 
-  // set up the chamfer filter
+  // Set up the chamfer filter
   m_ChamferFilter->SetInput( m_IsoContourFilter->GetOutput() );
   m_ChamferFilter->SetMaximumDistance(maximumDistance);
   m_ChamferFilter->SetNumberOfThreads( numberOfThreads );
 
-  // graft our output to the chamfer filter to force the proper regions
+  // Graft our output to the chamfer filter to force the proper regions
   // to be generated
   m_ChamferFilter->GraftOutput( output );
 
-  // create the distance map
+  // Create the distance map
   m_ChamferFilter->Update();
 
-  // graft the output of the chamfer filter back onto this filter's
+  // Graft the output of the chamfer filter back onto this filter's
   // output. this is needed to get the appropriate regions passed
   // back.
   this->GraftOutput( m_ChamferFilter->GetOutput() );
 
   // Recall that we set the isocontour value to halfway between the inside and
-  // oustide value. The above filters assume that regions "inside" objects are
+  // outside value. The above filters assume that regions "inside" objects are
   // those with values *less* than the isocontour. This assumption is violated
   // if the "inside" intensity value is greater than the "outside" value.
   // (E.g. in the case that we're computing the distance from a mask where the
   // background is zero and the objects are colored 255.)
   // In this case, the distance will be calculated negative, so we need to
   // flip the sign of the output image.
-  if ( m_InsideValue > m_OutsideValue )
+  if( m_InsideValue > m_OutsideValue )
     {
     ImageScanlineIterator< OutputImageType > ot( output, oRegion );
-    while ( !ot.IsAtEnd() )
+    while( !ot.IsAtEnd() )
       {
-      while ( !ot.IsAtEndOfLine() )
+      while( !ot.IsAtEndOfLine() )
         {
         ot.Set(ot.Get() * -1);
         ++ot;
