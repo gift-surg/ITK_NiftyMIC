@@ -14,6 +14,19 @@ endif()
 # To hide dependent variables
 include( CMakeDependentOption )
 
+# Install rules when creating a Python package with scikit-build
+if(SKBUILD)
+  set(PY_SITE_PACKAGES_PATH ${CMAKE_INSTALL_PREFIX} CACHE PATH "The install prefix for python package contents")
+  install(CODE "
+    unset(CMAKE_INSTALL_COMPONENT)
+    set(COMPONENT \"PythonWheelRuntimeLibraries\")
+    set(CMAKE_INSTALL_DO_STRIP 1)
+    include\(\"${PROJECT_BINARY_DIR}/cmake_install.cmake\")
+    unset(CMAKE_INSTALL_COMPONENT)
+    return()
+")
+endif()
+
 # Setup build locations.
 if(NOT CMAKE_RUNTIME_OUTPUT_DIRECTORY)
   set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${ITK_DIR}/bin)
@@ -59,6 +72,9 @@ set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${ITK_REQUIRED_LINK_
 set(BUILD_EXAMPLES ${ITK_BUILD_EXAMPLES})
 set(BUILD_DOCUMENTATION ${ITK_BUILD_DOCUMENTATION})
 option(BUILD_SHARED_LIBS "Build ITK with shared libraries." ${ITK_BUILD_SHARED})
+if(NOT CMAKE_POSITION_INDEPENDENT_CODE)
+  set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+endif()
 
 # Add the ITK_MODULES_DIR to the CMAKE_MODULE_PATH and then use the binary
 # directory for the project to write out new ones to.

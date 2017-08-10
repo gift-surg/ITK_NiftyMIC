@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 2.8.9 FATAL_ERROR)
 
 foreach(p
     CMP0025 # CMake 3.0
+    CMP0028
     CMP0042 # CMake 3.0
     CMP0054 # CMake 3.1
     CMP0056 # CMake 3.2
@@ -73,7 +74,7 @@ set(main_project_name ${_ITKModuleMacros_DEFAULT_LABEL})
 #-----------------------------------------------------------------------------
 # ITK version number.
 set(ITK_VERSION_MAJOR "4")
-set(ITK_VERSION_MINOR "12")
+set(ITK_VERSION_MINOR "13")
 set(ITK_VERSION_PATCH "0")
 
 if(NOT ITK_INSTALL_RUNTIME_DIR)
