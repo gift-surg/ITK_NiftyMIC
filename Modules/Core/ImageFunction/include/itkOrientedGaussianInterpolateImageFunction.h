@@ -6,7 +6,10 @@
   Date:      $Date: $
   Version:   $Revision: $
 
-  Copyright (c) Insight Software Consortium. All rights reserved.
+  Copyright (c) 2017, University College London
+  Author:    Michael Ebner, michael.ebner.14@ucl.ac.uk
+
+  Portions of this code are covered under the ITK copyright.
   See ITKCopyright.txt or http://www.itk.org/HTML/Copyright.htm for details.
 
      This software is distributed WITHOUT ANY WARRANTY; without even
