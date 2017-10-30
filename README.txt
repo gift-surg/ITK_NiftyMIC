@@ -1,4 +1,5 @@
-This is a custom fork of ITK for [NiftyMIC](https://github.com/gift-surg/NiftyMIC) and its related projects.
+This is a custom fork of ITK for NiftyMIC (https://github.com/gift-surg/NiftyMIC) and its related projects.
+See the Wiki (https://github.com/gift-surg/ITK_NiftyMIC/wiki) for further information.
 
 
 
