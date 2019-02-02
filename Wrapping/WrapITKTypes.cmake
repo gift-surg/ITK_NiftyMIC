@@ -128,8 +128,10 @@ WRAP_TYPE("itk::FixedArray" "FA" "itkFixedArray.h")
   # - ITK_WRAP_IMAGE_DIMS_INCREMENTED
   # - ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED
   # Dimensions 1;2;3;4;6 should always be wrapped.
+  # Dimension 9 is added for easier matrix handling in 3D (i.e. 9 entries),
+  #   particularly used for (Adjoint) Oriented Gaussian Interpolate Filters
 
-  UNIQUE(array_sizes "${dims};1;2;3;4;6;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED}")
+  UNIQUE(array_sizes "${dims};1;2;3;4;6;9;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED}")
 
   # 3-D FixedArrays are required as superclass of rgb pixels
   # TODO: Do we need fixed arrays for all of these types? For just the selected
