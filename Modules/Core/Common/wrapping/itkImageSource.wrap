@@ -21,4 +21,11 @@ itk_wrap_class("itk::ImageSource" POINTER)
     endforeach()
   endif()
 
+  # Used in GradientEuler3DTransformImageFilter
+  itk_wrap_template("ICV${ITKM_D}183"
+                    "itk::Image< itk::CovariantVector< ${ITKT_D},18 >,3 >")
+  # Used in GradientAffine3DTransformImageFilter
+  itk_wrap_template("ICV${ITKM_D}363"
+                    "itk::Image< itk::CovariantVector< ${ITKT_D},36 >,3 >")
+
 itk_end_wrap_class()

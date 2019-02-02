@@ -69,7 +69,9 @@ set(itk_Wrap_Offset ${WRAPPER_TEMPLATES})
 
 WRAP_TYPE("itk::Vector" "V" "itkVector.h")
   # dim 6 is used by ScaleSkewVersor3DTransform
-  UNIQUE(vector_dims "1;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED};6")
+  # dim 18 is used by GradientEuler3DTransformImageFilter
+  # dim 36 is used by GradientAffine3DTransformImageFilter
+  UNIQUE(vector_dims "1;${ITK_WRAP_VECTOR_COMPONENTS_INCREMENTED};6;18;36")
   UNIQUE(vector_types "UC;F;D;${WRAP_ITK_SCALAR}")
   foreach(vector_dim ${vector_dims})
     foreach(t ${vector_types})
@@ -90,7 +92,22 @@ WRAP_TYPE("itk::CovariantVector" "CV" "itkCovariantVector.h")
       "${ITKM_D}${vector_dim}"
       "${ITKT_D},${vector_dim}")
   endforeach()
-END_WRAP_TYPE()
+  # Used in GradientEuler3DTransformImageFilter
+  # ADD_TEMPLATE(
+  #   "${ITKM_F}18"
+  #   "${ITKT_F},18")
+  ADD_TEMPLATE(
+    "${ITKM_D}18"
+    "${ITKT_D},18")
+  END_WRAP_TYPE()
+  # Used in GradientAffine3DTransformImageFilter
+  # ADD_TEMPLATE(
+  #   "${ITKM_F}36"
+  #   "${ITKT_F},36")
+  ADD_TEMPLATE(
+    "${ITKM_D}36"
+    "${ITKT_D},36")
+  END_WRAP_TYPE()
 set(itk_Wrap_CovariantVector ${WRAPPER_TEMPLATES})
 
 WRAP_TYPE("itk::ContinuousIndex" "CI" "itkContinuousIndex.h")
@@ -275,6 +292,12 @@ WRAP_TYPE("itk::Image" "I" "itkImage.h")
       endif()
     endforeach()
   endforeach()
+  # Used in GradientEuler3DTransformImageFilter
+  # ADD_TEMPLATE("${ITKM_CVF18}3" "${ITKT_CVF18},3")
+  ADD_TEMPLATE("${ITKM_CVD18}3" "${ITKT_CVD18},3")
+  # Used in GradientAffine3DTransformImageFilter
+  # ADD_TEMPLATE("${ITKM_CVF36}3" "${ITKT_CVF36},3")
+  ADD_TEMPLATE("${ITKM_CVD36}3" "${ITKT_CVD36},3")
 
 END_WRAP_TYPE()
 set(itk_Wrap_Image ${WRAPPER_TEMPLATES})
